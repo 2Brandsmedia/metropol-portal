@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+coverage/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Cache and temporary files
+*.cache
+*.tmp
+.cache/
+tmp/
+temp/
+
+# PHP specific
+composer.phar
+phpunit.xml
+.phpunit.result.cache
+.phpcs-cache
+.php-cs-fixer.cache
+
+# Testing
+/tests/coverage/
+/tests/reports/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Uploads
+public/uploads/
+!public/uploads/.gitkeep
+
+# Sessions
+storage/sessions/
+!storage/sessions/.gitkeep
+
+# Database
+database/*.sqlite
+database/*.db
+
+# Deployment
+.deploy/
+deployment-config.local.php

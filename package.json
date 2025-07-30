@@ -1,0 +1,82 @@
+{
+  "name": "metropol-portal",
+  "version": "1.0.0",
+  "description": "Mehrsprachiges Mitarbeiter-Portal mit intelligenter Routenplanung",
+  "author": "2Brands Media GmbH",
+  "license": "PROPRIETARY",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx,js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx,js,jsx --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:unit": "vitest",
+    "test:e2e": "playwright test tests/e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky install",
+    "pre-commit": "npm run lint && npm run typecheck && npm run format:check"
+  },
+  "dependencies": {
+    "alpinejs": "^3.13.3",
+    "leaflet": "^1.9.4",
+    "axios": "^1.6.5",
+    "@types/leaflet": "^1.9.8"
+  },
+  "devDependencies": {
+    "@microsoft/playwright": "^1.41.0",
+    "@playwright/test": "^1.41.0",
+    "@ref-tools/ref-tools-mcp": "^1.0.0",
+    "@shadcn-ui/ui": "^0.8.0",
+    "@types/alpinejs": "^3.13.5",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "postcss": "^8.4.33",
+    "prettier": "^3.2.4",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vitest": "^1.2.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "command": "npx",
+        "args": ["@microsoft/playwright", "mcp", "start"]
+      },
+      "ref-tools": {
+        "command": "npx",
+        "args": ["@ref-tools/ref-tools-mcp", "start"]
+      },
+      "shadcn": {
+        "command": "npx",
+        "args": ["@shadcn-ui/ui", "mcp", "start"]
+      }
+    }
+  }
+}

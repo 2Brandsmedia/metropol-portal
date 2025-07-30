@@ -1,0 +1,16 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - vendor
+        - node_modules
+    checkMissingIterableValueType: false
+    reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false
+    strictRules:
+        strictCalls: true
+        strictFunctionCalls: true
+        strictMethods: true
+        allRules: true

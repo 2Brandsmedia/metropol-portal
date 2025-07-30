@@ -1,0 +1,103 @@
+{
+  "app": {
+    "name": "Metropol Portal",
+    "tagline": "Intelligente Routenplanung für Ihr Team",
+    "copyright": "© 2024 2Brands Media GmbH. Alle Rechte vorbehalten."
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "playlists": "Routen",
+    "users": "Benutzer",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "remember_me": "Angemeldet bleiben",
+    "forgot_password": "Passwort vergessen?",
+    "login_button": "Anmelden",
+    "logout_success": "Sie wurden erfolgreich abgemeldet",
+    "invalid_credentials": "Ungültige Anmeldedaten"
+  },
+  "playlist": {
+    "title": "Tagesroute",
+    "create": "Neue Route erstellen",
+    "edit": "Route bearbeiten",
+    "delete": "Route löschen",
+    "stops": "Stopps",
+    "add_stop": "Stopp hinzufügen",
+    "address": "Adresse",
+    "work_time": "Arbeitszeit (Minuten)",
+    "status": {
+      "pending": "Ausstehend",
+      "in_progress": "In Bearbeitung",
+      "completed": "Erledigt"
+    },
+    "optimize_route": "Route optimieren",
+    "total_time": "Gesamtzeit",
+    "estimated_duration": "Geschätzte Dauer",
+    "with_traffic": "Mit Verkehr"
+  },
+  "map": {
+    "loading": "Karte wird geladen...",
+    "error": "Karte konnte nicht geladen werden",
+    "current_location": "Aktueller Standort",
+    "traffic": {
+      "low": "Geringer Verkehr",
+      "medium": "Mittlerer Verkehr",
+      "high": "Starker Verkehr"
+    }
+  },
+  "user": {
+    "profile": "Profil",
+    "name": "Name",
+    "email": "E-Mail",
+    "role": {
+      "admin": "Administrator",
+      "employee": "Mitarbeiter"
+    },
+    "created_at": "Erstellt am",
+    "last_login": "Letzte Anmeldung"
+  },
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "back": "Zurück",
+    "confirm": "Bestätigen",
+    "refresh": "Aktualisieren"
+  },
+  "messages": {
+    "success": {
+      "saved": "Erfolgreich gespeichert",
+      "deleted": "Erfolgreich gelöscht",
+      "updated": "Erfolgreich aktualisiert",
+      "created": "Erfolgreich erstellt"
+    },
+    "error": {
+      "general": "Ein Fehler ist aufgetreten",
+      "network": "Netzwerkfehler",
+      "validation": "Bitte überprüfen Sie Ihre Eingaben",
+      "not_found": "Nicht gefunden"
+    },
+    "confirm": {
+      "delete": "Möchten Sie diesen Eintrag wirklich löschen?"
+    }
+  },
+  "time": {
+    "hours": "Stunden",
+    "minutes": "Minuten",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "yesterday": "Gestern"
+  },
+  "date": {
+    "format": "DD.MM.YYYY",
+    "time_format": "HH:mm",
+    "datetime_format": "DD.MM.YYYY HH:mm"
+  }
+}

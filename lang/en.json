@@ -1,0 +1,103 @@
+{
+  "app": {
+    "name": "Metropol Portal",
+    "tagline": "Intelligent Route Planning for Your Team",
+    "copyright": "© 2024 2Brands Media GmbH. All rights reserved."
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "playlists": "Routes",
+    "users": "Users",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "email": "Email Address",
+    "password": "Password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "login_button": "Sign In",
+    "logout_success": "You have been successfully logged out",
+    "invalid_credentials": "Invalid credentials"
+  },
+  "playlist": {
+    "title": "Daily Route",
+    "create": "Create New Route",
+    "edit": "Edit Route",
+    "delete": "Delete Route",
+    "stops": "Stops",
+    "add_stop": "Add Stop",
+    "address": "Address",
+    "work_time": "Work Time (minutes)",
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed"
+    },
+    "optimize_route": "Optimize Route",
+    "total_time": "Total Time",
+    "estimated_duration": "Estimated Duration",
+    "with_traffic": "With Traffic"
+  },
+  "map": {
+    "loading": "Loading map...",
+    "error": "Could not load map",
+    "current_location": "Current Location",
+    "traffic": {
+      "low": "Low Traffic",
+      "medium": "Medium Traffic",
+      "high": "Heavy Traffic"
+    }
+  },
+  "user": {
+    "profile": "Profile",
+    "name": "Name",
+    "email": "Email",
+    "role": {
+      "admin": "Administrator",
+      "employee": "Employee"
+    },
+    "created_at": "Created at",
+    "last_login": "Last Login"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "confirm": "Confirm",
+    "refresh": "Refresh"
+  },
+  "messages": {
+    "success": {
+      "saved": "Successfully saved",
+      "deleted": "Successfully deleted",
+      "updated": "Successfully updated",
+      "created": "Successfully created"
+    },
+    "error": {
+      "general": "An error occurred",
+      "network": "Network error",
+      "validation": "Please check your input",
+      "not_found": "Not found"
+    },
+    "confirm": {
+      "delete": "Are you sure you want to delete this item?"
+    }
+  },
+  "time": {
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday"
+  },
+  "date": {
+    "format": "MM/DD/YYYY",
+    "time_format": "HH:mm",
+    "datetime_format": "MM/DD/YYYY HH:mm"
+  }
+}

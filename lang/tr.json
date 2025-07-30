@@ -1,0 +1,103 @@
+{
+  "app": {
+    "name": "Metropol Portal",
+    "tagline": "Ekibiniz için Akıllı Rota Planlama",
+    "copyright": "© 2024 2Brands Media GmbH. Tüm hakları saklıdır."
+  },
+  "navigation": {
+    "dashboard": "Kontrol Paneli",
+    "playlists": "Rotalar",
+    "users": "Kullanıcılar",
+    "settings": "Ayarlar",
+    "logout": "Çıkış Yap"
+  },
+  "auth": {
+    "login": "Giriş Yap",
+    "email": "E-posta Adresi",
+    "password": "Şifre",
+    "remember_me": "Beni hatırla",
+    "forgot_password": "Şifremi unuttum?",
+    "login_button": "Giriş Yap",
+    "logout_success": "Başarıyla çıkış yaptınız",
+    "invalid_credentials": "Geçersiz giriş bilgileri"
+  },
+  "playlist": {
+    "title": "Günlük Rota",
+    "create": "Yeni Rota Oluştur",
+    "edit": "Rotayı Düzenle",
+    "delete": "Rotayı Sil",
+    "stops": "Duraklar",
+    "add_stop": "Durak Ekle",
+    "address": "Adres",
+    "work_time": "Çalışma Süresi (dakika)",
+    "status": {
+      "pending": "Beklemede",
+      "in_progress": "Devam Ediyor",
+      "completed": "Tamamlandı"
+    },
+    "optimize_route": "Rotayı Optimize Et",
+    "total_time": "Toplam Süre",
+    "estimated_duration": "Tahmini Süre",
+    "with_traffic": "Trafik Dahil"
+  },
+  "map": {
+    "loading": "Harita yükleniyor...",
+    "error": "Harita yüklenemedi",
+    "current_location": "Mevcut Konum",
+    "traffic": {
+      "low": "Az Trafik",
+      "medium": "Orta Trafik",
+      "high": "Yoğun Trafik"
+    }
+  },
+  "user": {
+    "profile": "Profil",
+    "name": "İsim",
+    "email": "E-posta",
+    "role": {
+      "admin": "Yönetici",
+      "employee": "Çalışan"
+    },
+    "created_at": "Oluşturulma Tarihi",
+    "last_login": "Son Giriş"
+  },
+  "actions": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "create": "Oluştur",
+    "back": "Geri",
+    "confirm": "Onayla",
+    "refresh": "Yenile"
+  },
+  "messages": {
+    "success": {
+      "saved": "Başarıyla kaydedildi",
+      "deleted": "Başarıyla silindi",
+      "updated": "Başarıyla güncellendi",
+      "created": "Başarıyla oluşturuldu"
+    },
+    "error": {
+      "general": "Bir hata oluştu",
+      "network": "Ağ hatası",
+      "validation": "Lütfen girişlerinizi kontrol edin",
+      "not_found": "Bulunamadı"
+    },
+    "confirm": {
+      "delete": "Bu öğeyi gerçekten silmek istiyor musunuz?"
+    }
+  },
+  "time": {
+    "hours": "Saat",
+    "minutes": "Dakika",
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "yesterday": "Dün"
+  },
+  "date": {
+    "format": "DD.MM.YYYY",
+    "time_format": "HH:mm",
+    "datetime_format": "DD.MM.YYYY HH:mm"
+  }
+}
