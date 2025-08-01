@@ -1,8 +1,8 @@
 # Metropol Portal - Production .htaccess für All-Inkl
 # Optimiert für firmenpro.de
 
-# PHP 8.3 Handler für All-Inkl
-AddHandler application/x-httpd-php83 .php
+# PHP 8.4 Handler für All-Inkl
+AddHandler application/x-httpd-php84 .php
 
 # Basis-Einstellungen
 DirectoryIndex index.php index.html

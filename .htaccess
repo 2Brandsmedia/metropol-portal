@@ -1,2 +1,2 @@
-# Minimale .htaccess nur mit PHP-Handler
-AddHandler application/x-httpd-php83 .php
+# Minimale .htaccess für PHP 8.4 auf All-Inkl
+AddHandler application/x-httpd-php84 .php
