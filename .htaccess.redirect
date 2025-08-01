@@ -1,0 +1,20 @@
+# All-Inkl PHP Handler
+AddHandler application/x-httpd-php84 .php
+
+# Alle PHP-Anfragen an test.php umleiten (da diese funktioniert)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Wenn test.php angefragt wird, direkt ausführen
+    RewriteRule ^test\.php$ - [L]
+    
+    # Alle anderen PHP-Dateien an test.php weiterleiten
+    RewriteCond %{REQUEST_URI} \.php$
+    RewriteCond %{REQUEST_URI} !^/test\.php$
+    RewriteRule ^(.*)$ test.php?original=$1 [L,QSA]
+    
+    # Standard-Routing für Non-PHP
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . test.php [L]
+</IfModule>
