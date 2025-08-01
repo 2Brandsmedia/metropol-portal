@@ -66,6 +66,7 @@ jobs:
           --exclude='.env.firmenpro' \
           --exclude='.htaccess.debug' \
           --exclude='test-results*' \
+          --no-perms --no-owner --no-group \
           -e "ssh -o StrictHostKeyChecking=no -p 22" \
           ./ ssh-w019e3c7@w019e3c7.kasserver.com:/www/htdocs/w019e3c7/firmenpro.de/
         
@@ -84,6 +85,26 @@ jobs:
            find . -name '*.php' -type f -exec chmod 644 {} \; && \
            echo 'Permissions set successfully'"
           
+    - name: Fix PHP execution
+      env:
+        SSH_PASS: ${{ secrets.SSH_PASS }}
+      run: |
+        echo "Fixing PHP execution issue..."
+        
+        # Copy working test.php to learn from it
+        sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no \
+          ssh-w019e3c7@w019e3c7.kasserver.com \
+          "cd /www/htdocs/w019e3c7/firmenpro.de/ && \
+           if [ -f test.php ]; then \
+             echo 'Analysing test.php...' && \
+             ls -la test.php && \
+             stat test.php 2>/dev/null || echo 'stat not available' && \
+             echo '--- Creating test files ---' && \
+             cp test.php test-from-copy.php && \
+             echo '<?php echo \"Direct test works!\"; ?>' > test-from-copy.php && \
+             ls -la test-from-copy.php; \
+           fi"
+           
     - name: Verify deployment
       env:
         SSH_PASS: ${{ secrets.SSH_PASS }}
