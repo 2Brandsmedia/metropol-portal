@@ -1,14 +1,19 @@
-# Metropol Portal - Temporäre .htaccess ohne Redirects
-# Diese Version verhindert Redirect-Loops
+# Metropol Portal - Production .htaccess
+# Für firmenpro.de auf All-Inkl
+
+# PHP 8.3 für All-Inkl
+AddHandler application/x-httpd-php83 .php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
-    # Keine automatischen Weiterleitungen
-    # Dateien müssen direkt aufgerufen werden:
-    # - test.php
-    # - install.php
-    # - public/index.php
+    # Erlaubt direkten Zugriff auf Debug/Install-Dateien
+    RewriteRule ^(debug|check|install)\.php$ - [L]
+    
+    # Alles andere an index.php im Root
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [L,QSA]
 </IfModule>
 
 # Verzeichnis-Browsing deaktivieren

@@ -1,0 +1,52 @@
+name: Smoke Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  smoke-tests:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Install Playwright
+      run: npx playwright install chromium
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite
+    
+    - name: Start PHP Server
+      run: |
+        php -S localhost:8080 -t public &
+        sleep 5
+    
+    - name: Run Smoke Tests
+      run: |
+        npx playwright test \
+          --grep "@smoke" \
+          --project=chromium \
+          --reporter=list
+      env:
+        BASE_URL: http://localhost:8080
+    
+    - name: Upload failure screenshots
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: smoke-test-failures
+        path: test-results/
+        retention-days: 3

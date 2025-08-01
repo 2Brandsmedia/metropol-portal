@@ -1,0 +1,44 @@
+# Minimale Debug .htaccess für firmenpro.de
+# Diese Datei sollte als .htaccess hochgeladen werden um Fehler zu identifizieren
+
+# PHP 8.3 für All-Inkl
+AddHandler application/x-httpd-php83 .php
+
+# Fehler anzeigen (nur für Debugging!)
+<IfModule mod_php.c>
+    php_flag display_errors On
+    php_flag display_startup_errors On
+    php_value error_reporting -1
+    php_flag log_errors On
+    php_value error_log /is/htdocs/wp1089317_2U5Q96CWZ7/firmenpro.de/logs/php_errors.log
+</IfModule>
+
+# Basis Rewrite-Regeln
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Erlaubt Zugriff auf debug.php
+    RewriteRule ^debug\.php$ - [L]
+    
+    # Erlaubt Zugriff auf install.php
+    RewriteRule ^install\.php$ - [L]
+    
+    # Statische Dateien direkt ausliefern
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^.*$ - [L]
+    
+    # Alles andere an public/index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/index.php [L,QSA]
+</IfModule>
+
+# Basis-Sicherheit
+Options -Indexes
+DirectoryIndex index.php index.html
+
+# Zugriff auf .env verbieten
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>

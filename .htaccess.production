@@ -1,0 +1,140 @@
+# Metropol Portal - Production .htaccess für All-Inkl
+# Optimiert für firmenpro.de
+
+# PHP 8.3 Handler für All-Inkl
+AddHandler application/x-httpd-php83 .php
+
+# Basis-Einstellungen
+DirectoryIndex index.php index.html
+Options -Indexes +FollowSymLinks
+
+# Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Installation prüfen - wenn .env fehlt, zu install.php
+    RewriteCond %{REQUEST_URI} !^/install\.php
+    RewriteCond %{REQUEST_URI} !^/check\.php
+    RewriteCond %{REQUEST_URI} !^/debug\.php
+    RewriteCond %{DOCUMENT_ROOT}/.env !-f
+    RewriteRule ^.*$ /install.php [L]
+    
+    # Wartungsmodus (wenn .maintenance existiert)
+    RewriteCond %{DOCUMENT_ROOT}/storage/.maintenance -f
+    RewriteCond %{REQUEST_URI} !^/maintenance\.html
+    RewriteRule ^.*$ /maintenance.html [L]
+    
+    # HTTPS erzwingen (nach SSL-Aktivierung einkommentieren)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+    
+    # www entfernen
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+    
+    # Statische Dateien direkt ausliefern
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^.*$ - [L]
+    
+    # Public-Ordner als Document Root
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteCond %{REQUEST_URI} !^/install\.php
+    RewriteCond %{REQUEST_URI} !^/check\.php
+    RewriteCond %{REQUEST_URI} !^/debug\.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ /public/$1 [L]
+    
+    # Alles andere an public/index.php
+    RewriteCond %{REQUEST_URI} ^/public/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^public/(.*)$ /public/index.php [L,QSA]
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    # Basis Security Headers
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # HSTS (nach SSL-Aktivierung einkommentieren)
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    
+    # Cache-Control für statische Assets
+    <FilesMatch "\.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|eot|svg)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# Kompression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/xml
+</IfModule>
+
+# Zugriff auf sensible Dateien verbieten
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# .env Datei schützen
+<Files ".env">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</Files>
+
+# Composer und npm Dateien schützen
+<FilesMatch "(composer\.(json|lock)|package\.(json|lock)|package-lock\.json)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# PHP Einstellungen (falls erlaubt)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+    php_value memory_limit 128M
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log /www/htdocs/w019e3c7/firmenpro.de/logs/php_errors.log
+</IfModule>
+
+# ETags deaktivieren
+FileETag None
+
+# MIME Types
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType image/svg+xml .svg
+    AddType application/font-woff .woff
+    AddType application/font-woff2 .woff2
+    AddType application/vnd.ms-fontobject .eot
+    AddType application/x-font-ttf .ttf
+    AddType font/opentype .otf
+</IfModule>

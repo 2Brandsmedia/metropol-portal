@@ -1,87 +1,77 @@
 {
   "name": "metropol-portal",
   "version": "1.0.0",
-  "description": "Mehrsprachiges Mitarbeiter-Portal mit intelligenter Routenplanung",
-  "author": "2Brands Media GmbH",
-  "license": "PROPRIETARY",
-  "private": true,
-  "type": "module",
+  "description": "Metropol Portal - Mitarbeiter-Portal mit intelligenter Routenplanung",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx,js,jsx --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --ext ts,tsx,js,jsx --fix",
-    "typecheck": "tsc --noEmit",
+    "dev": "php -S localhost:8080 -t public",
+    "build": "tsc && npm run build:css",
+    "build:css": "tailwindcss -i ./src/styles/input.css -o ./public/css/style.css --minify",
+    "watch:css": "tailwindcss -i ./src/styles/input.css -o ./public/css/style.css --watch",
     "test": "playwright test",
-    "test:unit": "vitest",
-    "test:e2e": "playwright test tests/e2e",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:auth": "playwright test tests/e2e/auth/",
+    "test:playlists": "playwright test tests/e2e/playlists/",
+    "test:api": "playwright test tests/api/",
+    "test:perf": "playwright test tests/performance/",
+    "test:headed": "playwright test --headed",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky install",
-    "pre-commit": "npm run lint && npm run typecheck && npm run format:check",
-    "test:performance": "node tests/Performance/run-all-tests.js",
-    "test:performance:smoke": "node tests/Performance/run-all-tests.js --test-type smoke",
-    "test:performance:load": "k6 run --config tests/Performance/k6-load-config.js tests/Performance/k6-tests.js",
-    "test:performance:stress": "k6 run --config tests/Performance/k6-stress-config.js tests/Performance/k6-tests.js",
-    "test:performance:baseline": "node tests/Performance/run-all-tests.js --test-type baseline",
-    "test:performance:mobile": "node tests/Performance/run-all-tests.js --test-type mobile",
-    "test:performance:full": "node tests/Performance/run-all-tests.js --test-type full --parallel",
-    "performance:check-budgets": "node tests/Performance/check-budgets.js",
-    "performance:generate-report": "node tests/Performance/generate-report.js",
-    "performance:dashboard": "open tests/Performance/monitoring-dashboard.html"
+    "load-test": "k6 run tests/load/concurrent-users.test.js",
+    "playwright:install": "playwright install",
+    "playwright:codegen": "playwright codegen"
   },
-  "dependencies": {
-    "alpinejs": "^3.13.3",
-    "leaflet": "^1.9.4",
-    "axios": "^1.6.5",
-    "@types/leaflet": "^1.9.8"
-  },
+  "keywords": [
+    "portal",
+    "routing",
+    "employee",
+    "management"
+  ],
+  "author": "2Brands Media GmbH",
+  "license": "PROPRIETARY",
   "devDependencies": {
-    "playwright": "^1.41.0",
     "@playwright/test": "^1.41.0",
-    "@types/alpinejs": "^3.13.5",
     "@types/node": "^20.11.0",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
-    "autoprefixer": "^10.4.17",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.1.3",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "postcss": "^8.4.33",
     "prettier": "^3.2.4",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
-    "vite": "^5.0.12",
-    "vitest": "^1.2.1",
-    "lighthouse": "^11.4.0",
-    "chrome-launcher": "^1.1.0",
-    "commander": "^11.1.0",
-    "puppeteer": "^21.6.1",
-    "chart.js": "^4.4.1"
+    "k6": "^0.48.0"
+  },
+  "dependencies": {
+    "alpinejs": "^3.13.3",
+    "leaflet": "^1.9.4"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md,css,scss}": [
+    "*.{json,md,yml,yaml}": [
       "prettier --write"
+    ],
+    "*.php": [
+      "php -l"
     ]
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
-  },
-  "mcp": {
-    "servers": {
-      "playwright": {
-        "command": "npx",
-        "args": ["playwright", "mcp", "start"]
-      }
-    }
   }
 }

@@ -1,0 +1,135 @@
+name: Deploy to firmenpro.de
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, pdo
+    
+    - name: Install Composer dependencies
+      run: |
+        composer install --no-dev --optimize-autoloader --no-interaction
+        
+    - name: Build assets
+      run: |
+        # Create necessary directories
+        mkdir -p public/css public/js
+        echo "/* Metropol Portal CSS */" > public/css/style.css
+        echo "// Metropol Portal JS" > public/js/app.js
+        
+    - name: Prepare deployment files
+      run: |
+        # Copy production .htaccess
+        cp .htaccess.production .htaccess 2>/dev/null || echo "No production .htaccess found"
+        
+        # Copy production .env
+        cp .env.firmenpro .env
+        
+        # Ensure directories exist
+        mkdir -p logs storage/cache storage/sessions storage/logs public/uploads
+        
+        # Create deployment marker
+        echo "$(date): Deployed via GitHub Actions" > deployment.log
+    
+    - name: Deploy via SSH
+      env:
+        SSH_PASS: ${{ secrets.SSH_PASS }}
+      run: |
+        # Install sshpass
+        sudo apt-get update && sudo apt-get install -y sshpass rsync
+        
+        # Deploy files via rsync over SSH
+        echo "Deploying files to firmenpro.de..."
+        
+        # First deployment - essential files only
+        sshpass -p "$SSH_PASS" rsync -avz --delete \
+          --exclude='.git/' \
+          --exclude='.github/' \
+          --exclude='node_modules/' \
+          --exclude='tests/' \
+          --exclude='playwright*' \
+          --exclude='*.md' \
+          --exclude='.env.example' \
+          --exclude='.env.firmenpro' \
+          --exclude='.htaccess.debug' \
+          --exclude='test-results*' \
+          -e "ssh -o StrictHostKeyChecking=no -p 22" \
+          ./ ssh-w019e3c7@w019e3c7.kasserver.com:/www/htdocs/w019e3c7/firmenpro.de/
+        
+        echo "Main deployment complete!"
+        
+    - name: Set permissions
+      env:
+        SSH_PASS: ${{ secrets.SSH_PASS }}
+      run: |
+        echo "Setting file permissions..."
+        sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no \
+          ssh-w019e3c7@w019e3c7.kasserver.com \
+          "cd /www/htdocs/w019e3c7/firmenpro.de/ && \
+           chmod 755 logs storage storage/cache storage/sessions storage/logs public/uploads && \
+           chmod 644 .htaccess .env && \
+           echo 'Permissions set successfully'"
+          
+    - name: Verify deployment
+      env:
+        SSH_PASS: ${{ secrets.SSH_PASS }}
+      run: |
+        echo "Verifying deployment..."
+        
+        # Check if critical files exist
+        sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no \
+          ssh-w019e3c7@w019e3c7.kasserver.com \
+          "cd /www/htdocs/w019e3c7/firmenpro.de/ && \
+           echo '=== Deployment Verification ===' && \
+           echo -n 'index.php: ' && ([ -f index.php ] && echo 'OK' || echo 'MISSING') && \
+           echo -n '.htaccess: ' && ([ -f .htaccess ] && echo 'OK' || echo 'MISSING') && \
+           echo -n '.env: ' && ([ -f .env ] && echo 'OK' || echo 'MISSING') && \
+           echo -n 'vendor/: ' && ([ -d vendor ] && echo 'OK' || echo 'MISSING') && \
+           echo -n 'public/: ' && ([ -d public ] && echo 'OK' || echo 'MISSING') && \
+           echo '=== PHP Version ===' && \
+           php -v | head -1 && \
+           echo '=== Deployment Complete ==='"
+        
+    - name: Test URLs
+      continue-on-error: true
+      run: |
+        echo "Testing deployed URLs..."
+        
+        # Test debug.php
+        echo "Testing debug.php..."
+        curl -s -o debug-output.txt http://firmenpro.de/debug.php || echo "debug.php not accessible"
+        
+        # Test check.php
+        echo "Testing check.php..."
+        curl -s -o check-output.txt http://firmenpro.de/check.php || echo "check.php not accessible"
+        
+        # Show first 20 lines of output
+        echo "=== Debug Output (first 20 lines) ==="
+        head -20 debug-output.txt 2>/dev/null || echo "No debug output"
+        
+    - name: Post deployment notification
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Deployment to firmenpro.de successful!"
+          echo "Next steps:"
+          echo "1. Check http://firmenpro.de/debug.php"
+          echo "2. Check http://firmenpro.de/check.php"
+          echo "3. Run installation if needed: http://firmenpro.de/install.php"
+        else
+          echo "❌ Deployment to firmenpro.de failed!"
+          echo "Check the logs above for errors."
+        fi
