@@ -1,0 +1,21 @@
+name: SSH Connection Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Test SSH Connection
+      run: |
+        echo "Testing SSH connection to All-Inkl..."
+        
+        # Install sshpass for password auth
+        sudo apt-get update && sudo apt-get install -y sshpass
+        
+        # Test connection and run simple command
+        sshpass -p "${{ secrets.SSH_PASS }}" ssh -o StrictHostKeyChecking=no \
+          ssh-w019e3c7@w019e3c7.kasserver.com \
+          "echo 'SSH connection successful!'; pwd; ls -la | head -10"
