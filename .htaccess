@@ -1,0 +1,72 @@
+# Metropol Portal - Root .htaccess
+# Diese Datei leitet alle Anfragen an den public Ordner weiter
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Installationsmodus - Wenn install.php existiert und .env nicht existiert
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{DOCUMENT_ROOT}/.env !-f
+    RewriteCond %{DOCUMENT_ROOT}/install.php -f
+    RewriteRule ^$ install.php [L]
+    
+    # Normale Weiterleitung zum public Ordner
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteCond %{REQUEST_URI} !^/install\.php
+    RewriteCond %{REQUEST_URI} !^/installer/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Verzeichnis-Browsing deaktivieren
+Options -Indexes
+
+# Sensible Dateien schützen
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# .env Datei schützen
+<Files ".env">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</Files>
+
+# Composer und npm Dateien schützen
+<FilesMatch "(composer\.(json|lock)|package\.(json|lock)|package-lock\.json)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# PHP Einstellungen (falls erlaubt)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+    php_value memory_limit 128M
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>

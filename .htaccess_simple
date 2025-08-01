@@ -1,0 +1,17 @@
+# Metropol Portal - Vereinfachte .htaccess für Shared Hosting
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Wenn install.php aufgerufen wird, direkt dorthin
+    RewriteCond %{REQUEST_URI} ^/install\.php$ [OR]
+    RewriteCond %{REQUEST_URI} ^/installer/
+    RewriteRule ^ - [L]
+    
+    # Alles andere zum public Ordner
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Basis-Sicherheit
+Options -Indexes

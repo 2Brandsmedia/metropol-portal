@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "test:performance": "node tests/Performance/run-all-tests.js",
+    "test:performance:smoke": "node tests/Performance/lighthouse.runner.js --mode=smoke",
+    "test:performance:load": "k6 run --config tests/Performance/k6-load-config.js tests/Performance/k6-tests.js",
+    "test:performance:stress": "k6 run --config tests/Performance/k6-stress-config.js tests/Performance/k6-tests.js",
+    "test:performance:baseline": "node tests/Performance/baseline-metrics.js --collect",
+    "test:performance:mobile": "node tests/Performance/mobile-performance.js",
+    "test:performance:full": "npm run test:performance:baseline && npm run test:performance:load && npm run test:performance:mobile",
+    "performance:check-budgets": "node tests/Performance/check-budgets.js",
+    "performance:generate-report": "node tests/Performance/generate-report.js",
+    "performance:update-dashboard": "node tests/Performance/update-dashboard.js",
+    "performance:update-monitoring": "node tests/Performance/update-monitoring.js",
+    "performance:aggregate-results": "node tests/Performance/aggregate-results.js",
+    "performance:regression-analysis": "node tests/Performance/regression-analysis.js",
+    "performance:generate-comprehensive-report": "node tests/Performance/comprehensive-report.js",
+    "performance:update-trends": "node tests/Performance/update-trends.js"
+  }
+}

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Monitoring Dashboard - Metropol Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .status-good { color: #10b981; }
+        .status-warning { color: #f59e0b; }
+        .status-critical { color: #ef4444; }
+        .bg-good { background-color: #10b981; }
+        .bg-warning { background-color: #f59e0b; }
+        .bg-critical { background-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <h1 class="text-3xl font-bold text-gray-900">Performance Monitoring</h1>
+                    <span class="ml-3 text-sm text-gray-500">Metropol Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-500">
+                        Letztes Update: <span id="last-update" class="font-medium">-</span>
+                    </div>
+                    <button id="refresh-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        Aktualisieren
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Status Overview -->
+        <div class="px-4 py-6 sm:px-0">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Overall Health -->
+                <div class="metric-card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div id="health-indicator" class="w-8 h-8 rounded-full bg-good"></div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">System-Status</h3>
+                            <p id="health-status" class="text-2xl font-bold status-good">Gesund</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Score -->
+                <div class="metric-card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Performance Score</h3>
+                            <p id="performance-score" class="text-2xl font-bold text-blue-600">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response Time -->
+                <div class="metric-card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Antwortzeit (P95)</h3>
+                            <p id="response-time" class="text-2xl font-bold text-green-600">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Rate -->
+                <div class="metric-card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Fehlerrate</h3>
+                            <p id="error-rate" class="text-2xl font-bold text-red-600">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Web Vitals -->
+            <div class="bg-white rounded-lg shadow mb-8">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Core Web Vitals</h2>
+                    <p class="text-sm text-gray-600">Kritische Performance-Metriken nach Google Standards</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- First Contentful Paint -->
+                        <div class="text-center">
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">First Contentful Paint</h3>
+                            <div class="relative w-32 h-32 mx-auto mb-4">
+                                <canvas id="fcp-chart" width="128" height="128"></canvas>
+                            </div>
+                            <p id="fcp-value" class="text-2xl font-bold">-</p>
+                            <p class="text-sm text-gray-500">Ziel: < 1.5s</p>
+                        </div>
+
+                        <!-- Largest Contentful Paint -->
+                        <div class="text-center">
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Largest Contentful Paint</h3>
+                            <div class="relative w-32 h-32 mx-auto mb-4">
+                                <canvas id="lcp-chart" width="128" height="128"></canvas>
+                            </div>
+                            <p id="lcp-value" class="text-2xl font-bold">-</p>
+                            <p class="text-sm text-gray-500">Ziel: < 2.5s</p>
+                        </div>
+
+                        <!-- Cumulative Layout Shift -->
+                        <div class="text-center">
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Cumulative Layout Shift</h3>
+                            <div class="relative w-32 h-32 mx-auto mb-4">
+                                <canvas id="cls-chart" width="128" height="128"></canvas>
+                            </div>
+                            <p id="cls-value" class="text-2xl font-bold">-</p>
+                            <p class="text-sm text-gray-500">Ziel: < 0.1</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Timeline -->
+            <div class="bg-white rounded-lg shadow mb-8">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Performance-Verlauf</h2>
+                    <p class="text-sm text-gray-600">Zeitlicher Verlauf der wichtigsten Metriken</p>
+                </div>
+                <div class="p-6">
+                    <canvas id="timeline-chart" height="400"></canvas>
+                </div>
+            </div>
+
+            <!-- Critical Paths Performance -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- API Response Times -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-900">API-Antwortzeiten</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium text-gray-900">Login</span>
+                                <div class="flex items-center">
+                                    <span id="login-time" class="text-sm font-medium mr-2">-</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div id="login-bar" class="bg-green-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium text-gray-900">Playlist-Laden</span>
+                                <div class="flex items-center">
+                                    <span id="playlist-time" class="text-sm font-medium mr-2">-</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div id="playlist-bar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium text-gray-900">Route-Berechnung</span>
+                                <div class="flex items-center">
+                                    <span id="route-time" class="text-sm font-medium mr-2">-</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div id="route-bar" class="bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium text-gray-900">Stopp-Update</span>
+                                <div class="flex items-center">
+                                    <span id="stop-time" class="text-sm font-medium mr-2">-</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div id="stop-bar" class="bg-orange-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Resources -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-900">Systemressourcen</h2>
+                    </div>
+                    <div class="p-6">
+                        <canvas id="resources-chart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts and Recommendations -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Warnungen & Empfehlungen</h2>
+                </div>
+                <div class="p-6">
+                    <div id="alerts-container" class="space-y-3">
+                        <!-- Alerts werden hier dynamisch eingefügt -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-sm text-gray-500">
+                Performance Monitoring Dashboard - Entwickelt von 2Brands Media GmbH
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * Performance Monitoring Dashboard für Metropol Portal
+         * Echtzeit-Überwachung und Visualisierung
+         * Entwickelt von 2Brands Media GmbH
+         */
+
+        class PerformanceMonitor {
+            constructor() {
+                this.charts = {};
+                this.data = {
+                    timeline: [],
+                    current: {},
+                    alerts: []
+                };
+                this.thresholds = {
+                    fcp: 1500,      // First Contentful Paint < 1.5s
+                    lcp: 2500,      // Largest Contentful Paint < 2.5s
+                    cls: 0.1,       // Cumulative Layout Shift < 0.1
+                    tti: 3000,      // Time to Interactive < 3s
+                    login: 100,     // Login < 100ms
+                    route: 300,     // Route calculation < 300ms
+                    performanceScore: 95 // Performance Score > 95
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.setupCharts();
+                this.loadData();
+                this.setupAutoRefresh();
+                this.setupEventListeners();
+                
+                console.log('Performance Monitor initialisiert');
+            }
+
+            setupCharts() {
+                // Core Web Vitals Donut Charts
+                this.createDonutChart('fcp-chart', 'FCP');
+                this.createDonutChart('lcp-chart', 'LCP');
+                this.createDonutChart('cls-chart', 'CLS');
+
+                // Timeline Chart
+                this.createTimelineChart();
+
+                // Resources Chart
+                this.createResourcesChart();
+            }
+
+            createDonutChart(canvasId, metric) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                
+                this.charts[canvasId] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [0, 100],
+                            backgroundColor: ['#10b981', '#e5e7eb'],
+                            borderWidth: 0,
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        maintainAspectRatio: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            createTimelineChart() {
+                const ctx = document.getElementById('timeline-chart').getContext('2d');
+                
+                this.charts.timeline = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: 'Response Time (ms)',
+                                data: [],
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Error Rate (%)',
+                                data: [],
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.4,
+                                yAxisID: 'y1'
+                            },
+                            {
+                                label: 'Performance Score',
+                                data: [],
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4,
+                                yAxisID: 'y2'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Zeit'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Response Time (ms)'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Error Rate (%)'
+                                },
+                                grid: {
+                                    drawOnChartArea: false,
+                                }
+                            },
+                            y2: {
+                                type: 'linear',
+                                display: false,
+                                min: 0,
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
+            }
+
+            createResourcesChart() {
+                const ctx = document.getElementById('resources-chart').getContext('2d');
+                
+                this.charts.resources = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['CPU', 'Memory', 'Disk I/O', 'Network'],
+                        datasets: [{
+                            label: 'Auslastung (%)',
+                            data: [0, 0, 0, 0],
+                            backgroundColor: [
+                                '#3b82f6',
+                                '#10b981',
+                                '#f59e0b',
+                                '#8b5cf6'
+                            ],
+                            borderColor: [
+                                '#2563eb',
+                                '#059669',
+                                '#d97706',
+                                '#7c3aed'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Auslastung (%)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            async loadData() {
+                try {
+                    // Simulated data loading - in real implementation, this would fetch from API
+                    const data = await this.fetchPerformanceData();
+                    this.updateDashboard(data);
+                } catch (error) {
+                    console.error('Fehler beim Laden der Performance-Daten:', error);
+                    this.showAlert('Fehler beim Laden der Daten', 'critical');
+                }
+            }
+
+            async fetchPerformanceData() {
+                // Simulation - in reality this would be an API call
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        const now = new Date();
+                        resolve({
+                            timestamp: now.toISOString(),
+                            coreWebVitals: {
+                                fcp: Math.random() * 2000 + 500,      // 500-2500ms
+                                lcp: Math.random() * 3000 + 1000,     // 1000-4000ms
+                                cls: Math.random() * 0.2,             // 0-0.2
+                                tti: Math.random() * 4000 + 1000      // 1000-5000ms
+                            },
+                            apiTimes: {
+                                login: Math.random() * 150 + 50,      // 50-200ms
+                                playlist: Math.random() * 200 + 100,  // 100-300ms
+                                route: Math.random() * 400 + 200,     // 200-600ms
+                                stop: Math.random() * 120 + 30        // 30-150ms
+                            },
+                            performance: {
+                                score: Math.random() * 20 + 80,       // 80-100
+                                responseTime: Math.random() * 400 + 100, // 100-500ms
+                                errorRate: Math.random() * 3,         // 0-3%
+                                throughput: Math.random() * 50 + 25   // 25-75 rps
+                            },
+                            resources: {
+                                cpu: Math.random() * 30 + 40,         // 40-70%
+                                memory: Math.random() * 25 + 60,      // 60-85%
+                                disk: Math.random() * 20 + 30,        // 30-50%
+                                network: Math.random() * 40 + 20      // 20-60%
+                            }
+                        });
+                    }, 500);
+                });
+            }
+
+            updateDashboard(data) {
+                this.data.current = data;
+                
+                // Update status indicators
+                this.updateStatusIndicators(data);
+                
+                // Update Core Web Vitals
+                this.updateCoreWebVitals(data.coreWebVitals);
+                
+                // Update API response times
+                this.updateApiTimes(data.apiTimes);
+                
+                // Update timeline
+                this.updateTimeline(data);
+                
+                // Update resources
+                this.updateResources(data.resources);
+                
+                // Check for alerts
+                this.checkAlerts(data);
+                
+                // Update last update time
+                document.getElementById('last-update').textContent = 
+                    new Date(data.timestamp).toLocaleString('de-DE');
+            }
+
+            updateStatusIndicators(data) {
+                const { performance } = data;
+                
+                // Overall health
+                let healthStatus = 'Gesund';
+                let healthClass = 'status-good';
+                let healthBg = 'bg-good';
+                
+                if (performance.errorRate > 2 || performance.score < 85) {
+                    healthStatus = 'Warnung';
+                    healthClass = 'status-warning';
+                    healthBg = 'bg-warning';
+                }
+                
+                if (performance.errorRate > 5 || performance.score < 70) {
+                    healthStatus = 'Kritisch';
+                    healthClass = 'status-critical';
+                    healthBg = 'bg-critical';
+                }
+                
+                document.getElementById('health-status').textContent = healthStatus;
+                document.getElementById('health-status').className = `text-2xl font-bold ${healthClass}`;
+                document.getElementById('health-indicator').className = `w-8 h-8 rounded-full ${healthBg}`;
+                
+                // Performance score
+                document.getElementById('performance-score').textContent = `${Math.round(performance.score)}/100`;
+                
+                // Response time
+                document.getElementById('response-time').textContent = `${Math.round(performance.responseTime)}ms`;
+                
+                // Error rate
+                document.getElementById('error-rate').textContent = `${performance.errorRate.toFixed(2)}%`;
+            }
+
+            updateCoreWebVitals(vitals) {
+                // FCP
+                const fcpValue = Math.round(vitals.fcp);
+                const fcpGood = fcpValue <= this.thresholds.fcp;
+                this.updateDonutChart('fcp-chart', fcpValue, this.thresholds.fcp, fcpGood);
+                document.getElementById('fcp-value').textContent = `${fcpValue}ms`;
+                document.getElementById('fcp-value').className = `text-2xl font-bold ${fcpGood ? 'text-green-600' : 'text-red-600'}`;
+                
+                // LCP
+                const lcpValue = Math.round(vitals.lcp);
+                const lcpGood = lcpValue <= this.thresholds.lcp;
+                this.updateDonutChart('lcp-chart', lcpValue, this.thresholds.lcp, lcpGood);
+                document.getElementById('lcp-value').textContent = `${lcpValue}ms`;
+                document.getElementById('lcp-value').className = `text-2xl font-bold ${lcpGood ? 'text-green-600' : 'text-red-600'}`;
+                
+                // CLS
+                const clsValue = vitals.cls.toFixed(3);
+                const clsGood = vitals.cls <= this.thresholds.cls;
+                this.updateDonutChart('cls-chart', vitals.cls * 1000, this.thresholds.cls * 1000, clsGood);
+                document.getElementById('cls-value').textContent = clsValue;
+                document.getElementById('cls-value').className = `text-2xl font-bold ${clsGood ? 'text-green-600' : 'text-red-600'}`;
+            }
+
+            updateDonutChart(chartId, value, threshold, isGood) {
+                const chart = this.charts[chartId];
+                const percentage = Math.min((value / threshold) * 100, 100);
+                
+                chart.data.datasets[0].data = [percentage, 100 - percentage];
+                chart.data.datasets[0].backgroundColor = [
+                    isGood ? '#10b981' : '#ef4444',
+                    '#e5e7eb'
+                ];
+                chart.update();
+            }
+
+            updateApiTimes(apiTimes) {
+                const apis = [
+                    { key: 'login', threshold: this.thresholds.login },
+                    { key: 'playlist', threshold: 200 },
+                    { key: 'route', threshold: this.thresholds.route },
+                    { key: 'stop', threshold: 100 }
+                ];
+
+                apis.forEach(api => {
+                    const value = Math.round(apiTimes[api.key]);
+                    const percentage = Math.min((value / api.threshold) * 100, 100);
+                    const isGood = value <= api.threshold;
+                    
+                    document.getElementById(`${api.key}-time`).textContent = `${value}ms`;
+                    const bar = document.getElementById(`${api.key}-bar`);
+                    bar.style.width = `${percentage}%`;
+                    bar.className = `h-2 rounded-full ${isGood ? 'bg-green-600' : 'bg-red-600'}`;
+                });
+            }
+
+            updateTimeline(data) {
+                const chart = this.charts.timeline;
+                const time = new Date(data.timestamp).toLocaleTimeString('de-DE');
+                
+                // Limit to last 20 data points
+                if (chart.data.labels.length >= 20) {
+                    chart.data.labels.shift();
+                    chart.data.datasets.forEach(dataset => dataset.data.shift());
+                }
+                
+                chart.data.labels.push(time);
+                chart.data.datasets[0].data.push(data.performance.responseTime);
+                chart.data.datasets[1].data.push(data.performance.errorRate);
+                chart.data.datasets[2].data.push(data.performance.score);
+                
+                chart.update();
+            }
+
+            updateResources(resources) {
+                const chart = this.charts.resources;
+                chart.data.datasets[0].data = [
+                    resources.cpu,
+                    resources.memory,
+                    resources.disk,
+                    resources.network
+                ];
+                chart.update();
+            }
+
+            checkAlerts(data) {
+                const alerts = [];
+                const { coreWebVitals, performance, apiTimes } = data;
+                
+                // Core Web Vitals alerts
+                if (coreWebVitals.fcp > this.thresholds.fcp) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `First Contentful Paint zu langsam: ${Math.round(coreWebVitals.fcp)}ms > ${this.thresholds.fcp}ms`,
+                        recommendation: 'Critical CSS inline laden, Fonts preloaden'
+                    });
+                }
+                
+                if (coreWebVitals.lcp > this.thresholds.lcp) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `Largest Contentful Paint zu langsam: ${Math.round(coreWebVitals.lcp)}ms > ${this.thresholds.lcp}ms`,
+                        recommendation: 'Hero-Images preloaden, Server-Response-Zeit reduzieren'
+                    });
+                }
+                
+                if (coreWebVitals.cls > this.thresholds.cls) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `Cumulative Layout Shift zu hoch: ${coreWebVitals.cls.toFixed(3)} > ${this.thresholds.cls}`,
+                        recommendation: 'Image-Dimensionen definieren, Layout-Shifts vermeiden'
+                    });
+                }
+                
+                // Performance alerts
+                if (performance.score < this.thresholds.performanceScore) {
+                    alerts.push({
+                        type: 'critical',
+                        message: `Performance Score zu niedrig: ${Math.round(performance.score)} < ${this.thresholds.performanceScore}`,
+                        recommendation: 'Umfassende Performance-Optimierung erforderlich'
+                    });
+                }
+                
+                if (performance.errorRate > 5) {
+                    alerts.push({
+                        type: 'critical',
+                        message: `Fehlerrate zu hoch: ${performance.errorRate.toFixed(2)}% > 5%`,
+                        recommendation: 'Sofortige Untersuchung der Fehlerursachen erforderlich'
+                    });
+                }
+                
+                // API alerts
+                if (apiTimes.login > this.thresholds.login) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `Login-Antwortzeit zu langsam: ${Math.round(apiTimes.login)}ms > ${this.thresholds.login}ms`,
+                        recommendation: 'Authentifizierungs-Pipeline optimieren'
+                    });
+                }
+                
+                if (apiTimes.route > this.thresholds.route) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `Route-Berechnung zu langsam: ${Math.round(apiTimes.route)}ms > ${this.thresholds.route}ms`,
+                        recommendation: 'Routing-Algorithmus optimieren, Caching implementieren'
+                    });
+                }
+                
+                this.displayAlerts(alerts);
+            }
+
+            displayAlerts(alerts) {
+                const container = document.getElementById('alerts-container');
+                
+                if (alerts.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex items-center p-4 bg-green-50 rounded-lg">
+                            <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <h3 class="text-sm font-medium text-green-800">Alles in Ordnung</h3>
+                                <p class="text-sm text-green-700">Alle Performance-Metriken sind im grünen Bereich.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = alerts.map(alert => {
+                    const colors = {
+                        critical: { bg: 'bg-red-50', text: 'text-red-800', icon: 'text-red-600' },
+                        warning: { bg: 'bg-yellow-50', text: 'text-yellow-800', icon: 'text-yellow-600' },
+                        info: { bg: 'bg-blue-50', text: 'text-blue-800', icon: 'text-blue-600' }
+                    };
+                    
+                    const color = colors[alert.type] || colors.info;
+                    
+                    return `
+                        <div class="flex p-4 ${color.bg} rounded-lg">
+                            <svg class="w-6 h-6 ${color.icon} mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            <div class="flex-grow">
+                                <h3 class="text-sm font-medium ${color.text}">${alert.message}</h3>
+                                <p class="text-sm ${color.text} mt-1 opacity-75">Empfehlung: ${alert.recommendation}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            setupAutoRefresh() {
+                // Auto-refresh every 30 seconds
+                setInterval(() => {
+                    this.loadData();
+                }, 30000);
+            }
+
+            setupEventListeners() {
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    this.loadData();
+                });
+            }
+        }
+
+        // Initialize dashboard when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.performanceMonitor = new PerformanceMonitor();
+        });
+    </script>
+</body>
+</html>

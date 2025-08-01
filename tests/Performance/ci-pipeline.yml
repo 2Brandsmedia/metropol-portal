@@ -1,0 +1,499 @@
+# CI/CD Pipeline für Performance-Tests - Metropol Portal
+# Automatisierte Performance-Überwachung bei jedem Deployment
+# Entwickelt von 2Brands Media GmbH
+
+name: Performance Testing Pipeline
+
+# Trigger für Performance-Tests
+on:
+  # Bei Push auf main branch (Production)
+  push:
+    branches: [ main ]
+  # Bei Pull Requests (vor Merge)
+  pull_request:
+    branches: [ main ]
+  # Geplante nächtliche Tests
+  schedule:
+    - cron: '0 2 * * *'  # 2:00 AM UTC täglich
+  # Manuelle Auslösung
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Art des Performance-Tests'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - load
+          - stress
+          - baseline
+          - full
+      environment:
+        description: 'Test-Umgebung'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+# Umgebungsvariablen
+env:
+  NODE_VERSION: '18'
+  PHP_VERSION: '8.3'
+  LIGHTHOUSE_VERSION: '11.4.0'
+  K6_VERSION: '0.47.0'
+
+jobs:
+  # Job 1: Smoke Tests (schnelle Überprüfung)
+  smoke-tests:
+    name: Smoke Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pdo_mysql, json, curl
+          
+      - name: Install Dependencies
+        run: |
+          npm ci
+          composer install --no-dev --optimize-autoloader
+          
+      - name: Install Performance Tools
+        run: |
+          npm install -g lighthouse@${{ env.LIGHTHOUSE_VERSION }}
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/grafana/k6/releases/download/v${{ env.K6_VERSION }}/k6-v${{ env.K6_VERSION }}-linux-amd64.tar.gz
+          tar -xzf k6-v${{ env.K6_VERSION }}-linux-amd64.tar.gz
+          sudo mv k6-v${{ env.K6_VERSION }}-linux-amd64/k6 /usr/local/bin/
+          
+      - name: Start Test Server
+        run: |
+          # PHP Development Server für Tests starten
+          php -S localhost:8000 -t public/ &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          
+          # Warten bis Server bereit ist
+          timeout 30 bash -c 'until curl -s http://localhost:8000/api/health; do sleep 1; done'
+          
+      - name: Run Lighthouse Smoke Tests
+        run: |
+          npm run test:performance:smoke
+        env:
+          BASE_URL: http://localhost:8000
+          
+      - name: Run K6 Smoke Tests
+        run: |
+          k6 run --config tests/Performance/k6-smoke-config.js tests/Performance/k6-tests.js
+        env:
+          BASE_URL: http://localhost:8000
+          
+      - name: Upload Smoke Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-results
+          path: tests/Performance/reports/
+          retention-days: 7
+          
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ ! -z "$SERVER_PID" ]; then
+            kill $SERVER_PID || true
+          fi
+
+  # Job 2: Baseline Performance Tests
+  baseline-tests:
+    name: Baseline Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && contains(github.event.inputs.test_type, 'baseline'))
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Environment
+        uses: ./.github/actions/setup-performance-env
+        
+      - name: Start Application
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          timeout 60 bash -c 'until curl -s http://localhost:8000/api/health; do sleep 2; done'
+          
+      - name: Run Baseline Collection
+        run: |
+          npm run test:performance:baseline
+        env:
+          BASE_URL: http://localhost:8000
+          
+      - name: Store Baseline Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-metrics
+          path: tests/Performance/baselines/
+          retention-days: 30
+          
+      - name: Update Performance Dashboard
+        run: |
+          npm run performance:update-dashboard
+          
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down
+
+  # Job 3: Load Testing (bei Main Branch)
+  load-tests:
+    name: Load Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: baseline-tests
+    
+    strategy:
+      matrix:
+        test_type: [load, stress, volume]
+        
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Environment
+        uses: ./.github/actions/setup-performance-env
+        
+      - name: Start Application Stack
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          timeout 120 bash -c 'until curl -s http://localhost:8000/api/health | grep -q "healthy"; do sleep 3; done'
+          
+      - name: Pre-populate Test Data
+        run: |
+          php database/seed.php --env=test
+          
+      - name: Run ${{ matrix.test_type }} Tests
+        run: |
+          k6 run --config tests/Performance/k6-${{ matrix.test_type }}-config.js tests/Performance/k6-tests.js
+        env:
+          BASE_URL: http://localhost:8000
+          TEST_TYPE: ${{ matrix.test_type }}
+          
+      - name: Generate Load Test Report
+        run: |
+          npm run performance:generate-report -- --type=${{ matrix.test_type }}
+          
+      - name: Upload Load Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-results-${{ matrix.test_type }}
+          path: |
+            tests/Performance/reports/
+            tests/Performance/k6-results/
+          retention-days: 14
+          
+      - name: Check Performance Budgets
+        id: budget-check
+        run: |
+          npm run performance:check-budgets -- --type=${{ matrix.test_type }}
+        continue-on-error: true
+        
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'tests/Performance/reports/performance-summary.json';
+            
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              
+              const comment = `
+              ## 📊 Performance Test Results - ${{ matrix.test_type }}
+              
+              **Overall Status:** ${report.testRun.passedTests === report.testRun.totalTests ? '✅ PASSED' : '❌ FAILED'}
+              
+              ### Key Metrics
+              - **Performance Score:** ${report.performance.averageScore.toFixed(1)}/100
+              - **Average FCP:** ${report.performance.averageFCP.toFixed(0)}ms
+              - **Average LCP:** ${report.performance.averageLCP.toFixed(0)}ms
+              - **Average CLS:** ${report.performance.averageCLS.toFixed(3)}
+              
+              ### Test Summary
+              - **Total Tests:** ${report.testRun.totalTests}
+              - **Passed:** ${report.testRun.passedTests}
+              - **Failed:** ${report.testRun.failedTests}
+              
+              ${report.budgetViolations.length > 0 ? 
+                `### ⚠️ Budget Violations\n${report.budgetViolations.map(v => `- ${v}`).join('\n')}` : 
+                '### ✅ All Performance Budgets Met'
+              }
+              
+              ---
+              *Performance tests powered by 2Brands Media GmbH*
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+            
+      - name: Fail if Budget Violations
+        if: steps.budget-check.outcome == 'failure'
+        run: |
+          echo "❌ Performance budgets violated - see artifacts for details"
+          exit 1
+          
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down -v
+
+  # Job 4: Mobile Performance Tests
+  mobile-tests:
+    name: Mobile Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'full')
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Environment
+        uses: ./.github/actions/setup-performance-env
+        
+      - name: Start Application
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          timeout 60 bash -c 'until curl -s http://localhost:8000/api/health; do sleep 2; done'
+          
+      - name: Run Mobile Lighthouse Tests
+        run: |
+          npm run test:performance:mobile
+        env:
+          BASE_URL: http://localhost:8000
+          
+      - name: Run Mobile Load Tests
+        run: |
+          k6 run --config tests/Performance/k6-mobile-config.js tests/Performance/k6-tests.js
+        env:
+          BASE_URL: http://localhost:8000
+          DEVICE_TYPE: mobile
+          
+      - name: Upload Mobile Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-test-results
+          path: tests/Performance/reports/mobile/
+          retention-days: 14
+          
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down
+
+  # Job 5: Performance Monitoring Update
+  monitoring-update:
+    name: Update Performance Monitoring
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [smoke-tests, baseline-tests, load-tests, mobile-tests]
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Download All Test Results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results/
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Aggregate Performance Data
+        run: |
+          npm run performance:aggregate-results
+        env:
+          RESULTS_PATH: test-results/
+          
+      - name: Update Monitoring Dashboard
+        run: |
+          npm run performance:update-monitoring
+        env:
+          DASHBOARD_URL: ${{ secrets.PERFORMANCE_DASHBOARD_URL }}
+          API_KEY: ${{ secrets.PERFORMANCE_API_KEY }}
+          
+      - name: Send Slack Notification
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#performance-alerts'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Job 6: Performance Regression Detection
+  regression-detection:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [smoke-tests]
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Environment
+        uses: ./.github/actions/setup-performance-env
+        
+      - name: Download Baseline Metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: baseline-metrics
+          path: baseline-metrics/
+          
+      - name: Download Current Test Results
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-test-results
+          path: current-results/
+          
+      - name: Run Regression Analysis
+        id: regression
+        run: |
+          npm run performance:regression-analysis
+        env:
+          BASELINE_PATH: baseline-metrics/
+          CURRENT_PATH: current-results/
+          
+      - name: Create Regression Report
+        if: steps.regression.outputs.regressions_found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const regressionPath = 'tests/Performance/reports/regression-report.json';
+            
+            if (fs.existsSync(regressionPath)) {
+              const report = JSON.parse(fs.readFileSync(regressionPath, 'utf8'));
+              
+              const comment = `
+              ## ⚠️ Performance Regression Detected
+              
+              **Regression Status:** ❌ PERFORMANCE REGRESSION FOUND
+              
+              ### Detected Regressions
+              ${report.regressions.map(r => `- **${r.metric}:** ${r.current} vs ${r.baseline} (${r.change})`).join('\n')}
+              
+              ### Impact Assessment
+              - **Severity:** ${report.severity}
+              - **Affected User Journeys:** ${report.affectedJourneys.join(', ')}
+              
+              ### Recommendations
+              ${report.recommendations.map(r => `- ${r}`).join('\n')}
+              
+              **⚡ Action Required:** Please review and optimize before merging.
+              
+              ---
+              *Regression analysis by 2Brands Media GmbH Performance Suite*
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+            
+      - name: Fail on Critical Regression
+        if: steps.regression.outputs.severity == 'critical'
+        run: |
+          echo "❌ Critical performance regression detected - blocking merge"
+          exit 1
+
+  # Job 7: Nightly Full Performance Suite
+  nightly-full-suite:
+    name: Nightly Full Performance Suite
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Environment
+        uses: ./.github/actions/setup-performance-env
+        
+      - name: Start Full Application Stack
+        run: |
+          docker-compose -f docker-compose.production.yml up -d
+          timeout 180 bash -c 'until curl -s http://localhost:8000/api/health | grep -q "healthy"; do sleep 5; done'
+          
+      - name: Run Complete Performance Suite
+        run: |
+          npm run test:performance:full
+        env:
+          BASE_URL: http://localhost:8000
+          
+      - name: Generate Comprehensive Report
+        run: |
+          npm run performance:generate-comprehensive-report
+          
+      - name: Upload Nightly Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-performance-results
+          path: |
+            tests/Performance/reports/
+            tests/Performance/nightly/
+          retention-days: 30
+          
+      - name: Update Performance Trends
+        run: |
+          npm run performance:update-trends
+          
+      - name: Send Performance Summary Email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "Nightly Performance Report - Metropol Portal"
+          body: file://tests/Performance/reports/nightly-summary.html
+          to: ${{ secrets.PERFORMANCE_TEAM_EMAIL }}
+          from: "Performance Monitor <noreply@2brands-media.com>"
+          content_type: text/html
+          
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.production.yml down -v

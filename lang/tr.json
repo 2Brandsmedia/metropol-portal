@@ -4,6 +4,15 @@
     "tagline": "Ekibiniz için Akıllı Rota Planlama",
     "copyright": "© 2024 2Brands Media GmbH. Tüm hakları saklıdır."
   },
+  "nav": {
+    "dashboard": "Kontrol Paneli",
+    "tasks": "Görevler",
+    "routes": "Rotalar",
+    "playlists": "Günlük Rotalar",
+    "admin": "Yönetim",
+    "profile": "Profil",
+    "settings": "Ayarlar"
+  },
   "navigation": {
     "dashboard": "Kontrol Paneli",
     "playlists": "Rotalar",
@@ -18,6 +27,7 @@
     "remember_me": "Beni hatırla",
     "forgot_password": "Şifremi unuttum?",
     "login_button": "Giriş Yap",
+    "logout": "Çıkış Yap",
     "logout_success": "Başarıyla çıkış yaptınız",
     "invalid_credentials": "Geçersiz giriş bilgileri"
   },
@@ -30,15 +40,50 @@
     "add_stop": "Durak Ekle",
     "address": "Adres",
     "work_time": "Çalışma Süresi (dakika)",
+    "work_duration": "Çalışma Süresi",
+    "travel_duration": "Seyahat Süresi",
+    "total_distance": "Toplam Mesafe",
+    "total_travel_time": "Toplam Seyahat Süresi",
+    "stop_number": "Durak",
+    "to_next_stop": "Sonraki durağa",
+    "distance": "Mesafe",
+    "savings": "Tasarruf",
+    "savings_description": "{duration} dk. ({percentage}%)",
     "status": {
       "pending": "Beklemede",
       "in_progress": "Devam Ediyor",
-      "completed": "Tamamlandı"
+      "completed": "Tamamlandı",
+      "draft": "Taslak",
+      "active": "Aktif"
     },
     "optimize_route": "Rotayı Optimize Et",
     "total_time": "Toplam Süre",
     "estimated_duration": "Tahmini Süre",
-    "with_traffic": "Trafik Dahil"
+    "with_traffic": "Trafik Dahil",
+    "basic_info": "Temel Bilgiler",
+    "name": "Rota Adı",
+    "name_placeholder": "örn. Pazartesi Sabah",
+    "date": "Tarih",
+    "address_placeholder": "Sokak, Numara, Posta Kodu Şehir",
+    "notes": "Notlar",
+    "notes_placeholder": "İsteğe bağlı notlar",
+    "no_stops": "Henüz durak eklenmedi",
+    "view_modes": {
+      "split": "Bölünmüş Görünüm",
+      "list_only": "Sadece Liste",
+      "map_only": "Sadece Harita"
+    },
+    "validation": {
+      "min_stops": "En az bir durak gerekli",
+      "address_required": "Tüm adresler doldurulmalıdır",
+      "invalid_duration": "Çalışma süresi 5 ile 480 dakika arasında olmalıdır"
+    },
+    "description": "Günlük rotalarınızı ve görevlerinizi yönetin",
+    "filter_by_date": "Tarihe göre filtrele",
+    "progress": "İlerleme",
+    "no_playlists": "Henüz rota bulunmuyor",
+    "no_playlists_desc": "Başlamak için ilk rotanızı oluşturun",
+    "confirm_delete": "Bu rotayı silmek istediğinizden emin misiniz?"
   },
   "map": {
     "loading": "Harita yükleniyor...",
@@ -47,8 +92,21 @@
     "traffic": {
       "low": "Az Trafik",
       "medium": "Orta Trafik",
-      "high": "Yoğun Trafik"
+      "high": "Yoğun Trafik",
+      "severe": "Çok Yoğun Trafik",
+      "unknown": "Bilinmiyor",
+      "with_traffic": "Trafik Dahil",
+      "delay": "Gecikme",
+      "live_traffic": "Canlı Trafik"
     }
+  },
+  "routes": {
+    "calculate": "Rota Hesapla",
+    "optimize": "Rotayı Optimize Et",
+    "refresh_traffic": "Trafiği Güncelle",
+    "traffic_updated": "Trafik verileri güncellendi",
+    "traffic_update_failed": "Trafik güncellemesi başarısız",
+    "route_optimized": "Rota başarıyla optimize edildi!"
   },
   "user": {
     "profile": "Profil",
@@ -69,7 +127,8 @@
     "create": "Oluştur",
     "back": "Geri",
     "confirm": "Onayla",
-    "refresh": "Yenile"
+    "refresh": "Yenile",
+    "view_all": "Tümünü görüntüle"
   },
   "messages": {
     "success": {
@@ -78,6 +137,7 @@
       "updated": "Başarıyla güncellendi",
       "created": "Başarıyla oluşturuldu"
     },
+    "saving": "Kaydediliyor",
     "error": {
       "general": "Bir hata oluştu",
       "network": "Ağ hatası",
@@ -93,11 +153,57 @@
     "minutes": "Dakika",
     "today": "Bugün",
     "tomorrow": "Yarın",
-    "yesterday": "Dün"
+    "yesterday": "Dün",
+    "hours_short": "sa.",
+    "minutes_short": "dk."
   },
   "date": {
     "format": "DD.MM.YYYY",
     "time_format": "HH:mm",
     "datetime_format": "DD.MM.YYYY HH:mm"
+  },
+  "ui": {
+    "language": "Dil",
+    "menu": "Menü",
+    "user_menu": "Kullanıcı Menüsü",
+    "close": "Kapat",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "loading": "Yükleniyor...",
+    "saving": "Kaydediliyor...",
+    "success": "Başarılı",
+    "error": "Hata",
+    "toggle_view": "Görünümü Değiştir"
+  },
+  "units": {
+    "km": "km",
+    "meters": "m",
+    "minutes_abbr": "dk.",
+    "hours_abbr": "sa."
+  },
+  "dashboard": {
+    "subtitle": "Bugün için genel bakışınız",
+    "stats": {
+      "open_tasks": "Açık Görevler",
+      "todays_routes": "Bugünkü Rotalar",
+      "completed_today": "Bugün Tamamlanan",
+      "on_track": "Zamanında",
+      "avg_time": "Ortalama Süre",
+      "per_task": "Görev Başına"
+    },
+    "quick_actions": "Hızlı İşlemler",
+    "actions": {
+      "create_task": "Yeni Görev Oluştur",
+      "create_task_desc": "Bugün için yeni bir görev ekle",
+      "plan_route": "Rota Planla",
+      "plan_route_desc": "Görevleriniz için en uygun rotayı hesapla",
+      "view_reports": "Raporları Görüntüle",
+      "view_reports_desc": "Performans raporlarını ve istatistikleri görüntüle"
+    },
+    "recent_activity": "Son Aktiviteler",
+    "no_recent_activity": "Son aktivite bulunmuyor"
+  },
+  "messages": {
+    "welcome": "Tekrar hoş geldiniz, :name!"
   }
 }

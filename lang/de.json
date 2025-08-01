@@ -4,6 +4,15 @@
     "tagline": "Intelligente Routenplanung für Ihr Team",
     "copyright": "© 2024 2Brands Media GmbH. Alle Rechte vorbehalten."
   },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Aufgaben",
+    "routes": "Routen",
+    "playlists": "Tagesrouten",
+    "admin": "Verwaltung",
+    "profile": "Profil",
+    "settings": "Einstellungen"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "playlists": "Routen",
@@ -18,6 +27,7 @@
     "remember_me": "Angemeldet bleiben",
     "forgot_password": "Passwort vergessen?",
     "login_button": "Anmelden",
+    "logout": "Abmelden",
     "logout_success": "Sie wurden erfolgreich abgemeldet",
     "invalid_credentials": "Ungültige Anmeldedaten"
   },
@@ -30,15 +40,50 @@
     "add_stop": "Stopp hinzufügen",
     "address": "Adresse",
     "work_time": "Arbeitszeit (Minuten)",
+    "work_duration": "Arbeitszeit",
+    "travel_duration": "Fahrzeit",
+    "total_distance": "Gesamtstrecke",
+    "total_travel_time": "Gesamtfahrzeit",
+    "stop_number": "Stopp",
+    "to_next_stop": "Fahrt zum nächsten",
+    "distance": "Distanz",
+    "savings": "Ersparnis",
+    "savings_description": "{duration} Min. ({percentage}%)",
     "status": {
       "pending": "Ausstehend",
       "in_progress": "In Bearbeitung",
-      "completed": "Erledigt"
+      "completed": "Erledigt",
+      "draft": "Entwurf",
+      "active": "Aktiv"
     },
     "optimize_route": "Route optimieren",
     "total_time": "Gesamtzeit",
     "estimated_duration": "Geschätzte Dauer",
-    "with_traffic": "Mit Verkehr"
+    "with_traffic": "Mit Verkehr",
+    "basic_info": "Grundinformationen",
+    "name": "Name der Route",
+    "name_placeholder": "z.B. Montag Vormittag",
+    "date": "Datum",
+    "address_placeholder": "Straße, Hausnummer, PLZ Ort",
+    "notes": "Notizen",
+    "notes_placeholder": "Optionale Hinweise",
+    "no_stops": "Noch keine Stopps hinzugefügt",
+    "view_modes": {
+      "split": "Split-Ansicht",
+      "list_only": "Nur Liste",
+      "map_only": "Nur Karte"
+    },
+    "validation": {
+      "min_stops": "Mindestens ein Stopp erforderlich",
+      "address_required": "Alle Adressen müssen ausgefüllt werden",
+      "invalid_duration": "Arbeitszeit muss zwischen 5 und 480 Minuten liegen"
+    },
+    "description": "Verwalten Sie Ihre täglichen Routen und Aufgaben",
+    "filter_by_date": "Nach Datum filtern",
+    "progress": "Fortschritt",
+    "no_playlists": "Noch keine Routen vorhanden",
+    "no_playlists_desc": "Erstellen Sie Ihre erste Route, um loszulegen",
+    "confirm_delete": "Möchten Sie diese Route wirklich löschen?"
   },
   "map": {
     "loading": "Karte wird geladen...",
@@ -47,8 +92,21 @@
     "traffic": {
       "low": "Geringer Verkehr",
       "medium": "Mittlerer Verkehr",
-      "high": "Starker Verkehr"
+      "high": "Starker Verkehr",
+      "severe": "Sehr starker Verkehr",
+      "unknown": "Unbekannt",
+      "with_traffic": "Mit Verkehr",
+      "delay": "Verzögerung",
+      "live_traffic": "Live-Traffic"
     }
+  },
+  "routes": {
+    "calculate": "Route berechnen",
+    "optimize": "Route optimieren",
+    "refresh_traffic": "Traffic aktualisieren",
+    "traffic_updated": "Traffic-Daten aktualisiert",
+    "traffic_update_failed": "Traffic-Update fehlgeschlagen",
+    "route_optimized": "Route erfolgreich optimiert!"
   },
   "user": {
     "profile": "Profil",
@@ -69,7 +127,8 @@
     "create": "Erstellen",
     "back": "Zurück",
     "confirm": "Bestätigen",
-    "refresh": "Aktualisieren"
+    "refresh": "Aktualisieren",
+    "view_all": "Alle anzeigen"
   },
   "messages": {
     "success": {
@@ -78,6 +137,7 @@
       "updated": "Erfolgreich aktualisiert",
       "created": "Erfolgreich erstellt"
     },
+    "saving": "Speichern",
     "error": {
       "general": "Ein Fehler ist aufgetreten",
       "network": "Netzwerkfehler",
@@ -93,11 +153,56 @@
     "minutes": "Minuten",
     "today": "Heute",
     "tomorrow": "Morgen",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "hours_short": "Std.",
+    "minutes_short": "Min."
   },
   "date": {
     "format": "DD.MM.YYYY",
     "time_format": "HH:mm",
     "datetime_format": "DD.MM.YYYY HH:mm"
+  },
+  "ui": {
+    "language": "Sprache",
+    "menu": "Menü",
+    "user_menu": "Benutzermenü",
+    "close": "Schließen",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "loading": "Wird geladen...",
+    "saving": "Wird gespeichert...",
+    "success": "Erfolgreich",
+    "error": "Fehler",
+    "toggle_view": "Ansicht wechseln"
+  },
+  "units": {
+    "km": "km",
+    "meters": "m",
+    "minutes_abbr": "Min.",
+    "hours_abbr": "Std."
+  },
+  "dashboard": {
+    "subtitle": "Hier ist Ihre Übersicht für heute",
+    "stats": {
+      "open_tasks": "Offene Aufgaben",
+      "todays_routes": "Heutige Routen",
+      "completed_today": "Heute erledigt",
+      "on_track": "Im Zeitplan",
+      "avg_time": "Durchschnittliche Zeit",
+      "per_task": "Pro Aufgabe"
+    },
+    "quick_actions": "Schnellaktionen",
+    "actions": {
+      "create_task": "Neue Aufgabe erstellen",
+      "create_task_desc": "Eine neue Aufgabe für heute hinzufügen",
+      "plan_route": "Route planen",
+      "plan_route_desc": "Optimale Route für Ihre Aufgaben berechnen",
+      "view_reports": "Berichte anzeigen",
+      "view_reports_desc": "Leistungsberichte und Statistiken einsehen"
+    },
+    "recent_activity": "Letzte Aktivitäten",
+    "no_recent_activity": "Keine aktuellen Aktivitäten vorhanden"
+  },
+  "messages": {
+    "welcome": "Willkommen zurück, :name!"
   }
-}

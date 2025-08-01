@@ -1,0 +1,413 @@
+name: I18n Maintenance and Quality Assurance
+
+on:
+  # Läuft bei Push auf main branch
+  push:
+    branches: [ main ]
+  
+  # Läuft bei Pull Requests
+  pull_request:
+    branches: [ main ]
+  
+  # Manuelle Ausführung
+  workflow_dispatch:
+  
+  # Täglich um 06:00 UTC (08:00 CEST)
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  i18n-quality-check:
+    name: I18n Quality Check
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: [8.3]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, json
+          ini-values: post_max_size=256M, upload_max_filesize=256M, max_execution_time=300
+          coverage: none
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --optimize-autoloader
+
+      - name: Validate Translation Files JSON
+        run: |
+          echo "🔍 Validating JSON syntax of translation files..."
+          for file in lang/*.json; do
+            echo "Checking $file..."
+            if ! jq empty < "$file"; then
+              echo "❌ Invalid JSON in $file"
+              exit 1
+            else
+              echo "✅ $file is valid JSON"
+            fi
+          done
+
+      - name: Run I18n Consistency Check
+        run: |
+          echo "🌐 Running I18n consistency check..."
+          php scripts/i18n-maintenance.php check > i18n-check-results.txt
+          
+          # Prüfe Exit-Code des Scripts
+          if [ $? -ne 0 ]; then
+            echo "❌ I18n consistency check failed"
+            cat i18n-check-results.txt
+            exit 1
+          fi
+          
+          echo "✅ I18n consistency check passed"
+          cat i18n-check-results.txt
+
+      - name: Check Translation Coverage
+        run: |
+          echo "📊 Checking translation coverage..."
+          php scripts/i18n-maintenance.php report > coverage-report.txt
+          
+          # Parse Coverage und fails wenn unter 95%
+          if grep -q "critical\|needs_attention" coverage-report.txt; then
+            echo "⚠️ Translation coverage is below acceptable threshold"
+            cat coverage-report.txt
+            
+            # Als Warning behandeln, nicht als Fehler
+            echo "::warning::Translation coverage needs improvement"
+          else
+            echo "✅ Translation coverage is excellent"
+          fi
+
+      - name: Find Unused Translation Keys
+        run: |
+          echo "🗑️ Searching for unused translation keys..."
+          php scripts/i18n-maintenance.php unused > unused-keys.txt
+          
+          # Prüfe ob ungenutzte Schlüssel gefunden wurden
+          if grep -q "ungenutzte Schlüssel" unused-keys.txt; then
+            echo "⚠️ Found unused translation keys"
+            cat unused-keys.txt
+            echo "::warning::Unused translation keys found - consider cleanup"
+          else
+            echo "✅ No unused translation keys found"
+          fi
+
+      - name: Validate Translation Placeholders
+        run: |
+          echo "🔤 Validating translation placeholders..."
+          # Erstelle temporäres PHP-Script für Platzhalter-Validierung
+          cat > validate-placeholders.php << 'EOF'
+          <?php
+          require_once 'vendor/autoload.php';
+          
+          use App\Core\Config;
+          use App\Core\Session;
+          use App\Agents\I18nAgent;
+          
+          $config = new Config();
+          $session = new Session();
+          $i18nAgent = new I18nAgent($config, $session);
+          
+          $issues = $i18nAgent->validatePlaceholders();
+          
+          if (!empty($issues)) {
+              echo "❌ Placeholder validation failed:\n";
+              foreach ($issues as $lang => $langIssues) {
+                  echo "Language: $lang\n";
+                  foreach ($langIssues as $key => $issue) {
+                      echo "  Key: $key\n";
+                      if (!empty($issue['missing_placeholders'])) {
+                          echo "    Missing: " . implode(', ', $issue['missing_placeholders']) . "\n";
+                      }
+                      if (!empty($issue['extra_placeholders'])) {
+                          echo "    Extra: " . implode(', ', $issue['extra_placeholders']) . "\n";
+                      }
+                  }
+              }
+              exit(1);
+          } else {
+              echo "✅ All placeholders are consistent\n";
+          }
+          EOF
+          
+          php validate-placeholders.php
+
+      - name: Create Backup
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "💾 Creating translation backup..."
+          php scripts/i18n-maintenance.php backup
+          
+          # Backup-Pfad für Artifacts extrahieren
+          BACKUP_PATH=$(php scripts/i18n-maintenance.php backup | grep -o '/.*backup_[0-9-_]*')
+          echo "BACKUP_PATH=$BACKUP_PATH" >> $GITHUB_ENV
+
+      - name: Upload Translation Backup
+        if: env.BACKUP_PATH != ''
+        uses: actions/upload-artifact@v3
+        with:
+          name: translation-backup-${{ github.run_number }}
+          path: ${{ env.BACKUP_PATH }}
+          retention-days: 30
+
+      - name: Auto-Sync Translations (Scheduled Only)
+        if: github.event_name == 'schedule'
+        run: |
+          echo "🔄 Auto-synchronizing translations..."
+          php scripts/i18n-maintenance.php sync --no-stubs
+          
+          # Prüfe ob Änderungen gemacht wurden
+          if git diff --quiet lang/; then
+            echo "✅ No synchronization needed"
+          else
+            echo "📝 Translation synchronization completed"
+            git status lang/
+          fi
+
+      - name: Generate Quality Report
+        run: |
+          echo "📈 Generating I18n quality report..."
+          
+          # Kombinierter Bericht
+          echo "# I18n Quality Report - $(date)" > i18n-quality-report.md
+          echo "" >> i18n-quality-report.md
+          
+          echo "## System Status" >> i18n-quality-report.md
+          php scripts/i18n-maintenance.php status >> i18n-quality-report.md
+          echo "" >> i18n-quality-report.md
+          
+          echo "## Coverage Report" >> i18n-quality-report.md
+          php scripts/i18n-maintenance.php report >> i18n-quality-report.md
+          echo "" >> i18n-quality-report.md
+          
+          echo "## Unused Keys" >> i18n-quality-report.md
+          php scripts/i18n-maintenance.php unused >> i18n-quality-report.md
+          
+          # Report als Artifact speichern
+          echo "Report generated successfully"
+
+      - name: Upload Quality Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: i18n-quality-report-${{ github.run_number }}
+          path: i18n-quality-report.md
+          retention-days: 7
+
+      - name: Comment PR with I18n Status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🌐 I18n Quality Check Results\n\n';
+            
+            try {
+              const report = fs.readFileSync('i18n-quality-report.md', 'utf8');
+              comment += '### Summary\n';
+              comment += '✅ I18n quality check completed successfully\n\n';
+              comment += '<details>\n<summary>Full Report</summary>\n\n';
+              comment += '```\n' + report + '\n```\n';
+              comment += '</details>';
+            } catch (error) {
+              comment += '❌ Failed to generate I18n quality report\n';
+              comment += 'Error: ' + error.message;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  translation-security-check:
+    name: Translation Security Check
+    runs-on: ubuntu-latest
+    needs: i18n-quality-check
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check for Sensitive Data in Translations
+        run: |
+          echo "🔒 Checking translations for sensitive data..."
+          
+          # Patterns für potentiell sensible Daten
+          SENSITIVE_PATTERNS=(
+            "password"
+            "secret"
+            "key"
+            "token"
+            "api_key"
+            "database"
+            "mysql"
+            "postgres"
+            "localhost"
+            "127.0.0.1"
+            "@"
+            "http://"
+            "ftp://"
+          )
+          
+          FOUND_ISSUES=false
+          
+          for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+            if grep -r -i "$pattern" lang/ --include="*.json"; then
+              echo "⚠️ Found potentially sensitive pattern: $pattern"
+              FOUND_ISSUES=true
+            fi
+          done
+          
+          if [ "$FOUND_ISSUES" = true ]; then
+            echo "::warning::Potentially sensitive data found in translations"
+          else
+            echo "✅ No sensitive data patterns found"
+          fi
+
+      - name: Validate Translation Key Naming
+        run: |
+          echo "📝 Validating translation key naming conventions..."
+          
+          # Prüfe auf ungültige Zeichen in Schlüsseln
+          if grep -rE '[^a-zA-Z0-9._-]' lang/ --include="*.json" | grep -v '":'; then
+            echo "❌ Invalid characters found in translation keys"
+            exit 1
+          fi
+          
+          # Prüfe auf zu lange Schlüssel (über 100 Zeichen)
+          if grep -rE '"[^"]{100,}":\s*' lang/ --include="*.json"; then
+            echo "⚠️ Very long translation keys found (>100 chars)"
+            echo "::warning::Consider shortening translation keys for maintainability"
+          fi
+          
+          echo "✅ Translation key naming is valid"
+
+  i18n-performance-test:
+    name: I18n Performance Test
+    runs-on: ubuntu-latest
+    needs: i18n-quality-check
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, json
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-ansi --no-interaction --optimize-autoloader
+
+      - name: Test Translation Loading Performance
+        run: |
+          echo "⚡ Testing translation loading performance..."
+          
+          cat > performance-test.php << 'EOF'
+          <?php
+          require_once 'vendor/autoload.php';
+          
+          use App\Core\Config;
+          use App\Core\Session;
+          use App\Agents\I18nAgent;
+          
+          $config = new Config();
+          $session = new Session();
+          
+          $languages = ['de', 'en', 'tr'];
+          $times = [];
+          
+          foreach ($languages as $lang) {
+              $start = microtime(true);
+              
+              // Simuliere 100 I18nAgent-Initialisierungen
+              for ($i = 0; $i < 100; $i++) {
+                  $i18nAgent = new I18nAgent($config, $session);
+                  $i18nAgent->setLanguage($lang);
+                  // Simuliere typische Übersetzungsaufrufe
+                  $i18nAgent->t('app.name');
+                  $i18nAgent->t('auth.login');
+                  $i18nAgent->t('playlist.title');
+              }
+              
+              $end = microtime(true);
+              $duration = ($end - $start) * 1000; // in ms
+              $times[$lang] = $duration;
+              
+              echo "Language $lang: " . round($duration, 2) . "ms (avg: " . round($duration/100, 2) . "ms per instance)\n";
+          }
+          
+          $maxTime = max($times);
+          $avgTime = array_sum($times) / count($times);
+          
+          echo "\nPerformance Summary:\n";
+          echo "Average: " . round($avgTime, 2) . "ms\n";
+          echo "Slowest: " . round($maxTime, 2) . "ms\n";
+          
+          // Performance-Threshold: 50ms average
+          if ($avgTime > 50) {
+              echo "❌ Performance threshold exceeded (>50ms average)\n";
+              exit(1);
+          } else {
+              echo "✅ Performance within acceptable limits\n";
+          }
+          EOF
+          
+          php performance-test.php
+
+      - name: Memory Usage Test
+        run: |
+          echo "💾 Testing memory usage..."
+          
+          cat > memory-test.php << 'EOF'
+          <?php
+          require_once 'vendor/autoload.php';
+          
+          use App\Core\Config;
+          use App\Core\Session;
+          use App\Agents\I18nAgent;
+          
+          $config = new Config();
+          $session = new Session();
+          
+          $memStart = memory_get_usage(true);
+          
+          // Erstelle viele I18nAgent-Instanzen
+          $agents = [];
+          for ($i = 0; $i < 50; $i++) {
+              $agents[] = new I18nAgent($config, $session);
+          }
+          
+          $memEnd = memory_get_usage(true);
+          $memUsed = ($memEnd - $memStart) / 1024 / 1024; // in MB
+          
+          echo "Memory usage: " . round($memUsed, 2) . "MB for 50 instances\n";
+          echo "Average per instance: " . round($memUsed / 50, 3) . "MB\n";
+          
+          // Memory-Threshold: 10MB total für 50 Instanzen
+          if ($memUsed > 10) {
+              echo "⚠️ High memory usage detected\n";
+              echo "::warning::I18nAgent memory usage is high - consider optimization"
+          } else {
+              echo "✅ Memory usage within acceptable limits\n";
+          }
+          EOF
+          
+          php memory-test.php

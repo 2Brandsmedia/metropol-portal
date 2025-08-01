@@ -35,6 +35,74 @@ Ein mehrsprachiges Mitarbeiter-Portal mit intelligenter Routenplanung für die t
 - **Git-basiertes Deployment** via Webhook
 - **Zero-Downtime** Deployment-Strategie
 
+## WICHTIGES ENTWICKLUNGSPRINZIP: Agent-First
+
+### Grundregel
+**IMMER Agenten für ALLE Aufgaben nutzen!** Kein direktes Coding ohne Agent-Koordination.
+
+### Warum Agent-First?
+- **Spezialisierung**: Jeder Agent ist Experte in seinem Bereich
+- **Qualität**: Automatische Checks und Validierungen
+- **Konsistenz**: Einheitliche Patterns und Standards
+- **Effizienz**: Parallelisierung und optimierte Workflows
+
+### Entwicklungs-Workflow mit Agents
+
+1. **Neue Features**: TestAgent → FeatureAgent → QualityAgent → DeployAgent
+2. **Bugfixes**: TestAgent → DebugAgent → QualityAgent → DeployAgent  
+3. **Performance**: MonitorAgent → PerformanceAgent → TestAgent → DeployAgent
+4. **Security**: SecurityAgent → PatchAgent → TestAgent → DeployAgent
+
+### Agent-Nutzung in der Praxis
+
+```bash
+# FALSCH - Direktes Editieren
+Edit file.php
+
+# RICHTIG - Agent nutzen
+Task: "FeatureAgent: Implement user registration validation"
+```
+
+### Agent-Kommunikation
+
+Agents arbeiten IMMER zusammen:
+- TestAgent validiert JEDEN Code
+- QualityAgent prüft JEDEN Commit
+- SecurityAgent scannt JEDE Änderung
+- MonitorAgent überwacht ALLES in Production
+
+### Beispiel: Abnahme- und Leistungstests implementieren
+
+```bash
+# Schritt 1: Performance-Baseline erstellen
+Task: "PerformanceTestAgent: Create performance baseline for all critical user paths"
+
+# Schritt 2: API-Monitoring aufsetzen  
+Task: "APILimitAgent: Setup monitoring dashboard for Google Maps, Nominatim and ORS APIs"
+
+# Schritt 3: Load Tests durchführen
+Task: "LoadTestAgent: Execute morning rush scenario with 100 concurrent users"
+
+# Schritt 4: Cache-Optimierung
+Task: "CacheAgent: Optimize caching strategy to reduce API calls by 50%"
+
+# Schritt 5: Qualitätssicherung
+Task: "QualityAgent: Validate all performance improvements and create report"
+```
+
+### Agent-Hierarchie für komplexe Aufgaben
+
+Bei größeren Aufgaben koordiniert ein Lead-Agent die anderen:
+
+```
+PerformanceOptimizationLead
+├── PerformanceTestAgent (Messungen)
+├── APILimitAgent (Limits überwachen)
+├── LoadTestAgent (Last simulieren)
+├── CacheAgent (Optimierungen)
+└── QualityAgent (Validierung)
+```
+
 ## Agentenarchitektur
 
 ### Kern-Agents
@@ -165,6 +233,50 @@ Ein mehrsprachiges Mitarbeiter-Portal mit intelligenter Routenplanung für die t
   - Daten-Migration
   - GDPR-konforme Löschung
 
+### Spezial-Agents für Abnahmetests
+
+#### PerformanceTestAgent
+- **Zweck**: Ladezeiten und Performance-Tests unter realistischen Bedingungen
+- **Erfolgskriterium**: Alle Performance-Metriken im grünen Bereich
+- **Verantwortlichkeiten**:
+  - Lighthouse-Tests automatisieren (Score > 95)
+  - Core Web Vitals messen (FCP < 1.5s, TTI < 3s, CLS < 0.1)
+  - Load Testing mit Apache JMeter/Locust
+  - Performance-Baseline etablieren
+  - Bottleneck-Analyse und Reporting
+
+#### APILimitAgent
+- **Zweck**: API-Nutzung überwachen und Limits verwalten
+- **Erfolgskriterium**: Keine API-Limit-Überschreitungen
+- **Verantwortlichkeiten**:
+  - Google Maps API Monitoring (25k/Tag)
+  - Nominatim Rate Limiting (1 req/s)
+  - OpenRouteService Quota-Tracking
+  - Warnstufen implementieren (80% gelb, 90% rot, 95% blockieren)
+  - Fallback-Strategien bei Limit-Erreichen
+  - Dashboard für API-Nutzungsstatistiken
+
+#### LoadTestAgent
+- **Zweck**: Realistische Last-Szenarien simulieren
+- **Erfolgskriterium**: 100+ gleichzeitige Nutzer ohne Degradation
+- **Verantwortlichkeiten**:
+  - Morning Rush Simulation (7-9 Uhr, 80% Tagesrouten)
+  - Lunch Update Tests (12-13 Uhr, Traffic-Updates)
+  - Evening Close Tests (17-18 Uhr, Status-Updates)
+  - Stress-Tests mit 200+ Nutzern
+  - Response-Zeit-Monitoring (< 300ms)
+  - Skalierungs-Empfehlungen
+
+#### CacheAgent
+- **Zweck**: Intelligente Cache-Strategien für API-Optimierung
+- **Erfolgskriterium**: 50% Reduktion externer API-Calls
+- **Verantwortlichkeiten**:
+  - Multi-Layer-Caching (Redis, MySQL, Browser)
+  - Cache-Warming für häufige Routen
+  - TTL-Optimierung basierend auf Nutzungsmuster
+  - Cache-Invalidierung bei Updates
+  - Hit-Rate-Monitoring und Optimierung
+
 ## Code-Standards
 
 ### PHP
@@ -287,4 +399,4 @@ Ein mehrsprachiges Mitarbeiter-Portal mit intelligenter Routenplanung für die t
 
 **Entwickelt von**: 2Brands Media GmbH  
 **Version**: 1.0.0  
-**Letzte Aktualisierung**: ${new Date().toISOString().split('T')[0]}
+**Letzte Aktualisierung**: 2025-07-30

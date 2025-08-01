@@ -60,7 +60,10 @@
             "@test"
         ],
         "migrate": "php database/migrate.php",
+        "migrate:rollback": "php database/migrate.php rollback",
+        "migrate:fresh": "php database/migrate.php rollback 999 && php database/migrate.php",
         "seed": "php database/seed.php",
+        "db:reset": "@migrate:fresh && @seed",
         "post-install-cmd": [
             "php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
