@@ -1,20 +1,14 @@
-# Metropol Portal - Root .htaccess
-# Diese Datei leitet alle Anfragen an den public Ordner weiter
+# Metropol Portal - Temporäre .htaccess ohne Redirects
+# Diese Version verhindert Redirect-Loops
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
-    # Installationsmodus - Wenn install.php existiert und .env nicht existiert
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{DOCUMENT_ROOT}/.env !-f
-    RewriteCond %{DOCUMENT_ROOT}/install.php -f
-    RewriteRule ^$ install.php [L]
-    
-    # Normale Weiterleitung zum public Ordner
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteCond %{REQUEST_URI} !^/install\.php
-    RewriteCond %{REQUEST_URI} !^/installer/
-    RewriteRule ^(.*)$ public/$1 [L]
+    # Keine automatischen Weiterleitungen
+    # Dateien müssen direkt aufgerufen werden:
+    # - test.php
+    # - install.php
+    # - public/index.php
 </IfModule>
 
 # Verzeichnis-Browsing deaktivieren
