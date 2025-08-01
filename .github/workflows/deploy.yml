@@ -35,7 +35,7 @@ jobs:
           set net:max-retries 3
           set net:reconnect-interval-base 5
           open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
-          mirror -R --delete --verbose \
+          mirror -R --delete --verbose --overwrite \
             --exclude .git/ \
             --exclude .github/ \
             --exclude .env \
@@ -43,7 +43,6 @@ jobs:
             --exclude README.md \
             --exclude INSTALLATION.md \
             --exclude debug.php \
-            --exclude test.php \
             --exclude node_modules/ \
             ./ /www/htdocs/w019e3c7/firmenpro.de/
           bye
