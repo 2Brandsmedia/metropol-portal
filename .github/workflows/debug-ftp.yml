@@ -1,0 +1,70 @@
+name: Debug FTP Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Debug FTP with detailed logging
+      run: |
+        echo "=== FTP DEBUG ==="
+        
+        # Install lftp
+        sudo apt-get update && sudo apt-get install -y lftp
+        
+        # Test 1: List directory
+        echo "Test 1: Listing FTP directory..."
+        lftp -c "
+          set ftp:ssl-allow no
+          set ftp:passive-mode yes
+          set ftp:list-options -la
+          debug 5
+          open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
+          cd /www/htdocs/w019e3c7/firmenpro.de/
+          ls -la
+          bye
+        " 2>&1 | head -50
+        
+        echo ""
+        echo "Test 2: Check if test.php exists on server..."
+        lftp -c "
+          set ftp:ssl-allow no
+          set ftp:passive-mode yes
+          open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
+          cd /www/htdocs/w019e3c7/firmenpro.de/
+          ls -la test.php
+          bye
+        " 2>&1
+        
+        echo ""
+        echo "Test 3: Try to upload a simple test file..."
+        echo "Test upload at $(date)" > ftp-debug-test.txt
+        
+        lftp -c "
+          set ftp:ssl-allow no
+          set ftp:passive-mode yes
+          debug 5
+          open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
+          cd /www/htdocs/w019e3c7/firmenpro.de/
+          put ftp-debug-test.txt
+          ls -la ftp-debug-test.txt
+          bye
+        " 2>&1 | tail -30
+        
+        echo ""
+        echo "Test 4: Check working directory..."
+        lftp -c "
+          set ftp:ssl-allow no
+          open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
+          pwd
+          bye
+        " 2>&1
+        
+        echo "=== END DEBUG ===
+"
