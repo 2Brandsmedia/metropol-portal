@@ -27,10 +27,16 @@ jobs:
         git diff --name-only HEAD^ HEAD || git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD
         echo "files=$(git diff --name-only HEAD^ HEAD 2>/dev/null || git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD)" >> $GITHUB_OUTPUT
     
+    - name: Test FTP Connection
+      run: |
+        echo "Testing FTP connection..."
+        curl -v --list-only ftp://w019e3c7.kasserver.com/ \
+          --user ${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }} \
+          || echo "FTP connection test failed"
+    
     - name: Deploy changed files only
       run: |
-        sudo apt-get update
-        sudo apt-get install -y lftp
+        echo "=== STARTING DEPLOYMENT ==="
         
         # Get changed files
         CHANGED_FILES=$(git diff --name-only HEAD^ HEAD 2>/dev/null || git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD)
@@ -40,36 +46,58 @@ jobs:
           exit 0
         fi
         
-        echo "Deploying changed files:"
+        echo "Changed files detected:"
         echo "$CHANGED_FILES"
+        echo "---"
         
         # Deploy each changed file
         for file in $CHANGED_FILES; do
+          echo "Processing: $file"
+          
           # Skip files we don't want to deploy
           if [[ "$file" == .github/* ]] || [[ "$file" == ".env" ]] || [[ "$file" == "README.md" ]] || [[ "$file" == ".gitignore" ]]; then
-            echo "Skipping $file"
+            echo "  → Skipping (excluded)"
             continue
           fi
           
-          # Check if file exists (not deleted)
-          if [ -f "$file" ]; then
-            echo "Uploading $file..."
+          # Check if file exists
+          if [ ! -f "$file" ]; then
+            echo "  → File deleted, skipping"
+            continue
+          fi
+          
+          echo "  → Uploading to server..."
+          
+          # Method 1: Try with curl first
+          echo "  → Trying curl upload..."
+          if curl -T "$file" \
+               ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com/www/htdocs/w019e3c7/firmenpro.de/$file \
+               --create-dirs \
+               -v; then
+            echo "  ✓ Upload successful with curl!"
+          else
+            echo "  ✗ Curl failed, trying lftp..."
             
-            # Get directory path
+            # Method 2: Fallback to lftp
+            sudo apt-get install -y lftp >/dev/null 2>&1
+            
             DIR=$(dirname "$file")
-            
-            # Create directory if needed and upload file
-            lftp -c "
+            if lftp -c "
               set ftp:ssl-allow no
               set ftp:passive-mode yes
+              set net:timeout 30
               open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
               mkdir -pf /www/htdocs/w019e3c7/firmenpro.de/$DIR
               put -O /www/htdocs/w019e3c7/firmenpro.de/$DIR $file
               bye
-            " || echo "Failed to upload $file"
-          else
-            echo "File $file was deleted, skipping"
+            "; then
+              echo "  ✓ Upload successful with lftp!"
+            else
+              echo "  ✗ Both upload methods failed for $file"
+            fi
           fi
+          
+          echo "---"
         done
         
-        echo "Deployment complete!"
+        echo "=== DEPLOYMENT COMPLETE ====="

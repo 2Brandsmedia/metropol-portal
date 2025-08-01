@@ -1,0 +1,6 @@
+DEPLOYMENT TEST FILE
+====================
+Created: <?php echo date('Y-m-d H:i:s'); ?>
+
+This is a test file to verify FTP deployment works.
+If you can see this on the server, deployment is working!
