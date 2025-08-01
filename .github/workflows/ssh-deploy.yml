@@ -1,0 +1,54 @@
+name: SSH Deploy to All-Inkl
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: w019e3c7.kasserver.com
+        username: ssh-w019e3c7
+        password: ${{ secrets.SSH_PASS }}
+        port: 22
+        script: |
+          echo "Connected to All-Inkl server!"
+          cd /www/htdocs/w019e3c7/firmenpro.de/
+          
+          # Clone or pull latest changes
+          if [ ! -d ".git" ]; then
+            echo "Initializing git repository..."
+            git init
+            git remote add origin https://github.com/2Brandsmedia/metropol-portal.git
+          fi
+          
+          echo "Pulling latest changes..."
+          git fetch origin main
+          git reset --hard origin/main
+          
+          echo "Setting permissions..."
+          chmod -R 755 .
+          chmod -R 777 cache/ 2>/dev/null || true
+          
+          echo "Deployment complete!"
+          
+    - name: Verify deployment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: w019e3c7.kasserver.com
+        username: ssh-w019e3c7
+        password: ${{ secrets.SSH_PASS }}
+        port: 22
+        script: |
+          cd /www/htdocs/w019e3c7/firmenpro.de/
+          echo "Checking if test.php was updated..."
+          head -5 test.php | grep -E "(DOCTYPE|Updated)" || echo "Old version still present"
