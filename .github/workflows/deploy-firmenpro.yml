@@ -81,6 +81,7 @@ jobs:
           "cd /www/htdocs/w019e3c7/firmenpro.de/ && \
            chmod 755 logs storage storage/cache storage/sessions storage/logs public/uploads && \
            chmod 644 .htaccess .env && \
+           find . -name '*.php' -type f -exec chmod 644 {} \; && \
            echo 'Permissions set successfully'"
           
     - name: Verify deployment

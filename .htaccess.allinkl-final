@@ -1,0 +1,30 @@
+# All-Inkl spezifische PHP 8.4 Konfiguration
+# Letzte Version - muss funktionieren!
+
+# WICHTIG: All-Inkl spezifischer Handler
+AddHandler application/x-httpd-php .php
+AddHandler application/x-httpd-php84 .php
+Action application/x-httpd-php84 /cgi-bin/php84
+
+# MIME-Types
+AddType application/x-httpd-php .php
+AddType application/x-httpd-php84 .php
+
+# CGI aktivieren
+Options +ExecCGI
+
+# Index-Datei
+DirectoryIndex index.php index.html
+
+# Keine Downloads von PHP-Dateien
+<Files *.php>
+    ForceType application/x-httpd-php84
+</Files>
+
+# Simple Rewrite
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . index.php [L]
+</IfModule>
