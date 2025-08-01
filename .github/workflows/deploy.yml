@@ -24,24 +24,30 @@ jobs:
         # Führe PHP Syntax Checks aus
         find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
     
-    - name: Deploy to All-Inkl via FTP
-      uses: SamKirkland/FTP-Deploy-Action@4.3.3
-      with:
-        server: w019e3c7.kasserver.com
-        username: ${{ secrets.FTP_USER }}
-        password: ${{ secrets.FTP_PASS }}
-        server-dir: /www/htdocs/w019e3c7/firmenpro.de/
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          .env
-          .env.example
-          README.md
-          INSTALLATION.md
-          debug.php
-          test.php
-          .github/**
+    - name: Deploy via lftp
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lftp
+        lftp -c "
+          set ftp:ssl-allow no
+          set ftp:passive-mode yes
+          set net:timeout 10
+          set net:max-retries 3
+          set net:reconnect-interval-base 5
+          open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
+          mirror -R --delete --verbose \
+            --exclude .git/ \
+            --exclude .github/ \
+            --exclude .env \
+            --exclude .env.example \
+            --exclude README.md \
+            --exclude INSTALLATION.md \
+            --exclude debug.php \
+            --exclude test.php \
+            --exclude node_modules/ \
+            ./ /www/htdocs/w019e3c7/firmenpro.de/
+          bye
+        "
     
     - name: Clear cache (optional)
       continue-on-error: true
