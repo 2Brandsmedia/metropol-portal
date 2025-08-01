@@ -1,0 +1,25 @@
+MANUELLER FTP-UPLOAD für test.php
+=====================================
+
+1. Öffnen Sie ein FTP-Programm (z.B. FileZilla)
+
+2. Verbindungsdaten:
+   - Server: w019e3c7.kasserver.com
+   - Benutzername: w019e3c7
+   - Passwort: Ihr FTP-Passwort
+   - Port: 21
+
+3. Navigieren Sie zu:
+   /www/htdocs/w019e3c7/firmenpro.de/
+
+4. Laden Sie diese Datei hoch:
+   test.php (aus dem lokalen Projektordner)
+
+5. Überschreiben Sie die existierende test.php
+
+Die neue test.php hat:
+- Besseres Design mit Container
+- Größere, lesbare Schriften
+- Professionelles Styling
+
+Alternativ können Sie auch im All-Inkl KAS den Dateimanager nutzen.
