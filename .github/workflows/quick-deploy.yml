@@ -30,9 +30,10 @@ jobs:
     - name: Test FTP Connection
       run: |
         echo "Testing FTP connection..."
-        curl -v --list-only ftp://w019e3c7.kasserver.com/ \
-          --user ${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }} \
-          || echo "FTP connection test failed"
+        # Simple upload test first
+        curl -T ftp-test-simple.txt \
+          ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com/www/htdocs/w019e3c7/firmenpro.de/ftp-test-simple.txt \
+          -v || echo "Upload failed"
     
     - name: Deploy changed files only
       run: |
