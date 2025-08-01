@@ -1,0 +1,75 @@
+name: Quick Deploy (Changed Files Only)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-changed:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 2  # Needed to get previous commit
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+    
+    - name: Get changed files
+      id: changed-files
+      run: |
+        echo "Changed files:"
+        git diff --name-only HEAD^ HEAD || git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD
+        echo "files=$(git diff --name-only HEAD^ HEAD 2>/dev/null || git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD)" >> $GITHUB_OUTPUT
+    
+    - name: Deploy changed files only
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lftp
+        
+        # Get changed files
+        CHANGED_FILES=$(git diff --name-only HEAD^ HEAD 2>/dev/null || git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD)
+        
+        if [ -z "$CHANGED_FILES" ]; then
+          echo "No files changed"
+          exit 0
+        fi
+        
+        echo "Deploying changed files:"
+        echo "$CHANGED_FILES"
+        
+        # Deploy each changed file
+        for file in $CHANGED_FILES; do
+          # Skip files we don't want to deploy
+          if [[ "$file" == .github/* ]] || [[ "$file" == ".env" ]] || [[ "$file" == "README.md" ]] || [[ "$file" == ".gitignore" ]]; then
+            echo "Skipping $file"
+            continue
+          fi
+          
+          # Check if file exists (not deleted)
+          if [ -f "$file" ]; then
+            echo "Uploading $file..."
+            
+            # Get directory path
+            DIR=$(dirname "$file")
+            
+            # Create directory if needed and upload file
+            lftp -c "
+              set ftp:ssl-allow no
+              set ftp:passive-mode yes
+              open ftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASS }}@w019e3c7.kasserver.com
+              mkdir -pf /www/htdocs/w019e3c7/firmenpro.de/$DIR
+              put -O /www/htdocs/w019e3c7/firmenpro.de/$DIR $file
+              bye
+            " || echo "Failed to upload $file"
+          else
+            echo "File $file was deleted, skipping"
+          fi
+        done
+        
+        echo "Deployment complete!"

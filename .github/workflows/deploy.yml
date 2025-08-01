@@ -1,9 +1,7 @@
-name: Deploy to All-Inkl
+name: Full Deploy to All-Inkl
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch:  # Nur manuell auslösen
 
 jobs:
   deploy:
