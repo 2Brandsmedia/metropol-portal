@@ -1,20 +1,8 @@
 name: I18n Maintenance and Quality Assurance
 
 on:
-  # Läuft bei Push auf main branch
-  push:
-    branches: [ main ]
-  
-  # Läuft bei Pull Requests
-  pull_request:
-    branches: [ main ]
-  
-  # Manuelle Ausführung
+  # Nur manuelle Ausführung - da das Projekt kein Composer nutzt
   workflow_dispatch:
-  
-  # Täglich um 06:00 UTC (08:00 CEST)
-  schedule:
-    - cron: '0 6 * * *'
 
 jobs:
   i18n-quality-check:
