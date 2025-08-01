@@ -1,0 +1,52 @@
+name: Deploy to All-Inkl
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, pdo, pdo_mysql, json, curl
+    
+    - name: Run tests
+      run: |
+        # Führe PHP Syntax Checks aus
+        find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
+    
+    - name: Deploy to All-Inkl via FTP
+      uses: SamKirkland/FTP-Deploy-Action@4.3.3
+      with:
+        server: w019e3c7.kasserver.com
+        username: ${{ secrets.FTP_USER }}
+        password: ${{ secrets.FTP_PASS }}
+        server-dir: /www/htdocs/w019e3c7/firmenpro.de/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          .env
+          .env.example
+          README.md
+          INSTALLATION.md
+          debug.php
+          test.php
+          .github/**
+    
+    - name: Clear cache (optional)
+      continue-on-error: true
+      run: |
+        # Webhook zum Cache leeren (falls eingerichtet)
+        curl -X POST https://firmenpro.de/api/cache/clear \
+          -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
+          || echo "Cache clear skipped"
