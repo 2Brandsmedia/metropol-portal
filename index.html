@@ -71,19 +71,45 @@
             <li>Status: PHP wird als Download ausgeliefert</li>
         </ul>
         
+        <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 4px;">
+            <strong>🔧 Workaround für Entwickler:</strong><br>
+            1. Laden Sie <code>deploy-endpoint.php</code> manuell über KAS/FTP hoch<br>
+            2. Ändern Sie das Token in der Datei<br>
+            3. Rufen Sie auf: <code>/deploy-endpoint.php?token=IHR-TOKEN&action=test</code><br>
+            4. Dies erstellt eine funktionierende PHP-Datei
+        </div>
+        
         <p style="margin-top: 30px; color: #666;">
-            <small>Entwickelt von 2Brands Media GmbH</small>
+            <small>Entwickelt von 2Brands Media GmbH</small><br>
+            <small>Deployment: GitHub Actions → SSH/rsync → All-Inkl</small>
         </p>
     </div>
     
     <script>
-        // Check if PHP works by trying to load a PHP file
-        fetch('/test.php')
-            .then(response => {
-                if (response.headers.get('content-type').includes('application/x-httpd-php')) {
-                    console.error('PHP files are being served as downloads');
-                }
-            });
+        // Diagnostic checks
+        console.log('=== Metropol Portal Diagnostics ===');
+        
+        // Check various PHP files
+        const phpFiles = ['test.php', 'index.php', 'check.php', 'debug.php'];
+        
+        phpFiles.forEach(file => {
+            fetch('/' + file, { method: 'HEAD' })
+                .then(response => {
+                    const contentType = response.headers.get('content-type');
+                    console.log(`${file}: ${response.status} - ${contentType}`);
+                    
+                    if (contentType && contentType.includes('application/x-httpd-php')) {
+                        console.error(`❌ ${file} served as download!`);
+                    } else if (response.status === 200) {
+                        console.log(`✓ ${file} might be working`);
+                    }
+                })
+                .catch(err => console.error(`${file}: ${err.message}`));
+        });
+        
+        // Server info
+        console.log('Server:', window.location.hostname);
+        console.log('Protocol:', window.location.protocol);
     </script>
 </body>
 </html>
