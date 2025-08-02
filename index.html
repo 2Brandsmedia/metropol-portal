@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metropol Portal - PHP Configuration Error</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .error-box {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .solution {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h1>⚠️ PHP Konfigurationsfehler</h1>
+        
+        <p>Die Website kann nicht angezeigt werden, da PHP-Dateien nicht korrekt ausgeführt werden.</p>
+        
+        <div class="info">
+            <strong>Problem:</strong><br>
+            Der Webserver behandelt PHP-Dateien als Downloads statt sie auszuführen.
+            Dies deutet auf eine fehlerhafte PHP-Handler-Konfiguration hin.
+        </div>
+        
+        <div class="solution">
+            <strong>Lösungsschritte für All-Inkl:</strong><br>
+            1. In KAS einloggen<br>
+            2. Domain <code>firmenpro.de</code> auswählen<br>
+            3. PHP-Version auf 8.4 prüfen<br>
+            4. .htaccess-Override aktivieren<br>
+            5. FastCGI/CGI-Modus kontrollieren
+        </div>
+        
+        <p><strong>Technische Details:</strong></p>
+        <ul>
+            <li>Server: All-Inkl (KAS)</li>
+            <li>PHP-Version: 8.4 (nicht aktiv)</li>
+            <li>Handler: <code>application/x-httpd-php84</code></li>
+            <li>Status: PHP wird als Download ausgeliefert</li>
+        </ul>
+        
+        <p style="margin-top: 30px; color: #666;">
+            <small>Entwickelt von 2Brands Media GmbH</small>
+        </p>
+    </div>
+    
+    <script>
+        // Check if PHP works by trying to load a PHP file
+        fetch('/test.php')
+            .then(response => {
+                if (response.headers.get('content-type').includes('application/x-httpd-php')) {
+                    console.error('PHP files are being served as downloads');
+                }
+            });
+    </script>
+</body>
+</html>
