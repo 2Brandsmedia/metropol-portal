@@ -1,10 +1,10 @@
-# All-Inkl PHP 8.2 FastCGI Handler
-AddHandler php-fastcgi82 .php
-Action php-fastcgi82 /cgi-bin/php82-fcgi
-
-# Alternative Handler
-AddHandler php82-fastcgi .php
-AddType application/x-httpd-php82 .php
-
-# DirectoryIndex
+# Minimal .htaccess - let All-Inkl handle PHP
 DirectoryIndex index.php index.html
+
+# Basic rewrite
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . index.php [L]
+</IfModule>
