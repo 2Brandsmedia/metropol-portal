@@ -1,10 +1,2 @@
-# All-Inkl PHP 8.2 Configuration - Alternative Handler
-AddHandler php82-cgi .php
-Action php82-cgi /cgi-bin/php82
-AddType application/x-httpd-php82 .php
-DirectoryIndex index.php index.html
-
-# Force PHP execution
-<FilesMatch "\.php$">
-    SetHandler php82-cgi
-</FilesMatch>
+# All-Inkl Standard PHP Configuration
+# Keine Handler-Direktiven - All-Inkl sollte PHP automatisch erkennen
