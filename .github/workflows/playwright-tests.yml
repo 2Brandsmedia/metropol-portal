@@ -16,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        shard: [1/4, 2/4, 3/4, 4/4]
+        shard: [1, 2, 3, 4]
+        total: [4]
     
     steps:
     - uses: actions/checkout@v4
@@ -45,7 +46,7 @@ jobs:
         sleep 5
     
     - name: Run Playwright tests
-      run: npx playwright test --shard=${{ matrix.shard }}
+      run: npx playwright test --shard=${{ matrix.shard }}/${{ matrix.total }}
       env:
         BASE_URL: http://localhost:8080
     
@@ -53,7 +54,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: playwright-report-${{ matrix.shard }}
+        name: playwright-report-shard-${{ matrix.shard }}-of-${{ matrix.total }}
         path: playwright-report/
         retention-days: 30
     
@@ -61,7 +62,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: playwright-videos-${{ matrix.shard }}
+        name: playwright-videos-shard-${{ matrix.shard }}-of-${{ matrix.total }}
         path: test-results/
         retention-days: 7
 

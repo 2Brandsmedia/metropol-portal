@@ -1,2 +1,10 @@
-# All-Inkl Standard PHP Configuration
-# Keine Handler-Direktiven - All-Inkl sollte PHP automatisch erkennen
+# All-Inkl PHP 8.2 FastCGI Handler
+AddHandler php-fastcgi82 .php
+Action php-fastcgi82 /cgi-bin/php82-fcgi
+
+# Alternative Handler
+AddHandler php82-fastcgi .php
+AddType application/x-httpd-php82 .php
+
+# DirectoryIndex
+DirectoryIndex index.php index.html
