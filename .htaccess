@@ -1,2 +1,3 @@
-# All-Inkl Basic Configuration
-DirectoryIndex index.html index.php
+# All-Inkl PHP 8.2 Configuration
+AddHandler application/x-httpd-php82 .php
+DirectoryIndex index.php index.html
